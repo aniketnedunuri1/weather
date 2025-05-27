@@ -8,42 +8,21 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import WeatherCard from "./components/weather-card"
-import WeatherChart from "./components/weather-chart"
+import SimpleCombinedChart from "./components/simple-combined-chart"
 import type { WeatherData } from "./types/weather"
+import { thisFridayWeatherResponse, nextFridayWeatherResponse } from "./mock/weatherApiResponse"
+import { convertApiResponseToAppFormat } from "./utils/weatherDataAdapter"
+import { getWeatherTagInfo } from "./utils/weatherTags"
 
-// Mock weather data
-const mockWeatherData: { thisFriday: WeatherData; nextFriday: WeatherData } = {
-  thisFriday: {
-    date: nextFriday(new Date()),
-    tempHigh: 72,
-    tempLow: 58,
-    precipitation: 15,
-    windSpeed: 8,
-    summary: "Perfect Day",
-    condition: "sunny",
-    hourlyData: [
-      { time: "3 PM", temp: 68, precipitation: 10 },
-      { time: "4 PM", temp: 70, precipitation: 15 },
-      { time: "5 PM", temp: 72, precipitation: 20 },
-      { time: "6 PM", temp: 69, precipitation: 15 },
-    ],
-  },
-  nextFriday: {
-    date: addDays(nextFriday(new Date()), 7),
-    tempHigh: 65,
-    tempLow: 52,
-    precipitation: 45,
-    windSpeed: 12,
-    summary: "Chance of Rain",
-    condition: "cloudy",
-    hourlyData: [
-      { time: "3 PM", temp: 62, precipitation: 40 },
-      { time: "4 PM", temp: 65, precipitation: 45 },
-      { time: "5 PM", temp: 63, precipitation: 50 },
-      { time: "6 PM", temp: 60, precipitation: 45 },
-    ],
-  },
-}
+// Convert mock API responses to app format
+const thisFridayDate = nextFriday(new Date());
+const nextFridayDate = addDays(thisFridayDate, 7);
+
+// Mock weather data using our API response format
+const mockWeatherData = {
+  thisFriday: convertApiResponseToAppFormat(thisFridayWeatherResponse, thisFridayDate),
+  nextFriday: convertApiResponseToAppFormat(nextFridayWeatherResponse, nextFridayDate)
+};
 
 export default function WeatherMeetupApp() {
   const [location, setLocation] = useState("")
@@ -63,7 +42,25 @@ export default function WeatherMeetupApp() {
     // Simulate API call
     setTimeout(() => {
       setLoading(false)
+      
       // In a real app, you'd fetch actual weather data here
+      // For now, we're using our mock data with the location
+      const updatedThisFriday = {
+        ...thisFridayWeatherResponse,
+        resolvedAddress: `${location}, United States`,
+        address: location
+      };
+      
+      const updatedNextFriday = {
+        ...nextFridayWeatherResponse,
+        resolvedAddress: `${location}, United States`,
+        address: location
+      };
+      
+      setWeatherData({
+        thisFriday: convertApiResponseToAppFormat(updatedThisFriday, thisFridayDate),
+        nextFriday: convertApiResponseToAppFormat(updatedNextFriday, nextFridayDate)
+      });
     }, 1500)
   }
 
@@ -128,15 +125,16 @@ export default function WeatherMeetupApp() {
             <WeatherCard title="Next Friday" weather={weatherData.nextFriday} isPrimary={false} />
           </div>
 
-          {/* Weather Comparison Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">Weather Comparison</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <WeatherChart thisFriday={weatherData.thisFriday} nextFriday={weatherData.nextFriday} />
-            </CardContent>
-          </Card>
+          {/* Weather Visualization */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Weather Visualization</h2>
+            <SimpleCombinedChart 
+              thisFridayDay={thisFridayWeatherResponse.days[0]}
+              nextFridayDay={nextFridayWeatherResponse.days[0]}
+              thisFridayDate={thisFridayDate}
+              nextFridayDate={nextFridayDate}
+            />
+          </div>
         </>
       )}
     </div>

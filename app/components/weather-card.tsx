@@ -3,10 +3,12 @@ import { Badge } from "@/components/ui/badge"
 import { Thermometer, Droplets, Wind, Sun, Cloud, CloudRain } from "lucide-react"
 import { format } from "date-fns"
 import type { WeatherData } from "../types/weather"
+import { WeatherTagInfo } from "../utils/weatherTags"
+import WeatherTag from "./weather-tag"
 
 interface WeatherCardProps {
   title: string
-  weather: WeatherData
+  weather: WeatherData & { tags?: WeatherTagInfo[] }
   isPrimary: boolean
 }
 
@@ -64,6 +66,17 @@ export default function WeatherCard({ title, weather, isPrimary }: WeatherCardPr
         <Badge variant={getSummaryVariant(weather.summary)} className="w-full justify-center font-semibold">
           {weather.summary}
         </Badge>
+
+        {weather.tags && weather.tags.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-medium mb-2">Weather Conditions:</p>
+            <div className="flex flex-wrap">
+              {weather.tags.map((tag, index) => (
+                <WeatherTag key={index} tag={tag} />
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
