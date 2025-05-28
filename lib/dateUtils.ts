@@ -31,19 +31,13 @@ export function getNextDayOccurrence(dayName: string): Date {
 }
 
 /**
- * Adjust a date to a specific time of day
+ * Adjust a date to a specific hour
  * @param date - The date to adjust
- * @param timeOfDay - The time of day ("morning", "afternoon", "evening")
- * @returns Date object adjusted to the specified time of day
+ * @param hour - The hour to set (0-23)
+ * @returns Date object adjusted to the specified hour
  */
-export function adjustTimeOfDay(date: Date, timeOfDay: string): Date {
-  const times = {
-    morning: 10, // 10 AM
-    afternoon: 14, // 2 PM
-    evening: 18 // 6 PM
-  };
-  
-  return setMinutes(setHours(date, times[timeOfDay as keyof typeof times]), 0);
+export function adjustTimeToHour(date: Date, hour: number): Date {
+  return setMinutes(setHours(date, hour), 0);
 }
 
 /**
@@ -56,16 +50,23 @@ export function getNextOccurrence(date: Date): Date {
 }
 
 /**
- * Get time of day display text
- * @param timeOfDay - The time of day key
- * @returns Formatted display text for the time of day
+ * Format hour for display
+ * @param hour - The hour (0-23)
+ * @returns Formatted display text for the hour
  */
-export function getTimeOfDayDisplay(timeOfDay: string): string {
-  const timeOfDayMap = {
-    morning: "Morning (8-12)",
-    afternoon: "Afternoon (12-5)",
-    evening: "Evening (5-9)"
-  };
-  
-  return timeOfDayMap[timeOfDay as keyof typeof timeOfDayMap] || "Afternoon";
+export function formatHourForDisplay(hour: number): string {
+  if (hour === 0) return "12 AM";
+  if (hour === 12) return "12 PM";
+  if (hour < 12) return `${hour} AM`;
+  return `${hour - 12} PM`;
+}
+
+/**
+ * Get time range display text
+ * @param startHour - The start hour (0-23)
+ * @param endHour - The end hour (0-23)
+ * @returns Formatted display text for the time range
+ */
+export function getTimeRangeDisplay(startHour: number, endHour: number): string {
+  return `${formatHourForDisplay(startHour)} - ${formatHourForDisplay(endHour)}`;
 }

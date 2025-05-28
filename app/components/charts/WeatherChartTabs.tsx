@@ -19,14 +19,15 @@ import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WeatherDay } from "@/app/types/weatherApi"
-import { getTimeOfDayDisplay } from "@/lib/dateUtils"
+import { formatHourForDisplay, getTimeRangeDisplay } from "@/lib/dateUtils"
 
 interface WeatherChartTabsProps {
   thisMeetupDay: WeatherDay
   nextMeetupDay: WeatherDay
   thisMeetupDate: Date
   nextMeetupDate: Date
-  timeOfDay: string
+  startHour: number
+  endHour: number
   dayName: string
 }
 
@@ -35,7 +36,8 @@ export default function WeatherChartTabs({
   nextMeetupDay,
   thisMeetupDate,
   nextMeetupDate,
-  timeOfDay = "afternoon",
+  startHour = 12,
+  endHour = 17,
   dayName = "friday"
 }: WeatherChartTabsProps) {
   const [activeTab, setActiveTab] = useState("temperature")
@@ -47,31 +49,48 @@ export default function WeatherChartTabs({
   // Get day name for display
   const dayDisplayName = format(thisMeetupDate, "EEEE")
   
-  // Get time of day for display
-  const timeOfDayDisplay = getTimeOfDayDisplay(timeOfDay)
+  // Get time range for display
+  const timeRangeDisplay = getTimeRangeDisplay(startHour, endHour)
   
-  // Format hours data for charts
+  // Format hours data for charts, filtering to only include the selected time range
   const formatHourlyData = () => {
-    return thisMeetupDay.hours.map((hour, index) => {
-      // Extract hour from "HH:MM:SS" format
-      const hourNum = parseInt(hour.datetime.split(':')[0])
-      const formattedHour = hourNum > 12 ? `${hourNum - 12}PM` : `${hourNum}AM`
-      
-      // Get corresponding hour from next meetup (if available)
-      const nextMeetupHour = nextMeetupDay.hours[index] || {}
-      
-      return {
-        hour: formattedHour,
-        [`this_temp`]: hour.temp,
-        [`next_temp`]: nextMeetupHour.temp,
-        [`this_precip`]: hour.precipprob,
-        [`next_precip`]: nextMeetupHour.precipprob,
-        [`this_wind`]: hour.windspeed,
-        [`next_wind`]: nextMeetupHour.windspeed,
-        [`this_humidity`]: hour.humidity,
-        [`next_humidity`]: nextMeetupHour.humidity
-      }
-    })
+    return thisMeetupDay.hours
+      .filter((hour) => {
+        // Extract hour from "HH:MM:SS" format
+        const hourNum = parseInt(hour.datetime.split(':')[0])
+        // Only include hours within the selected range
+        return hourNum >= startHour && hourNum <= endHour
+      })
+      .map((hour, index, filteredHours) => {
+        // Extract hour from "HH:MM:SS" format
+        const hourNum = parseInt(hour.datetime.split(':')[0])
+        const formattedHour = formatHourForDisplay(hourNum)
+        
+        // Find the corresponding hour in the next meetup day
+        const nextMeetupHour = nextMeetupDay.hours.find(h => 
+          parseInt(h.datetime.split(':')[0]) === hourNum
+        ) || {
+          temp: 0,
+          precipprob: 0,
+          windspeed: 0,
+          humidity: 0
+        } as Partial<WeatherDay['hours'][0]>
+        
+        return {
+          hour: formattedHour,
+          hourNum: hourNum, // Store the numeric hour for sorting
+          [`this_temp`]: hour.temp,
+          [`next_temp`]: nextMeetupHour.temp,
+          [`this_precip`]: hour.precipprob,
+          [`next_precip`]: nextMeetupHour.precipprob,
+          [`this_wind`]: hour.windspeed,
+          [`next_wind`]: nextMeetupHour.windspeed,
+          [`this_humidity`]: hour.humidity,
+          [`next_humidity`]: nextMeetupHour.humidity
+        }
+      })
+      // Sort by hour to ensure chronological order
+      .sort((a, b) => a.hourNum - b.hourNum)
   }
 
   const hourlyData = formatHourlyData()
@@ -79,7 +98,7 @@ export default function WeatherChartTabs({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Weather Comparison for {dayDisplayName} {timeOfDayDisplay}</CardTitle>
+        <CardTitle>Weather Comparison for {dayDisplayName} {timeRangeDisplay}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

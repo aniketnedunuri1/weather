@@ -4,14 +4,17 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Clock } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { formatHourForDisplay } from "@/lib/dateUtils"
 
 interface WeatherSearchProps {
   location: string
   setLocation: (location: string) => void
   selectedDay: string
   setSelectedDay: (day: string) => void
-  selectedTimeOfDay: string
-  setSelectedTimeOfDay: (timeOfDay: string) => void
+  selectedStartHour: number
+  setSelectedStartHour: (hour: number) => void
+  selectedEndHour: number
+  setSelectedEndHour: (hour: number) => void
   loading: boolean
   handleLocationSubmit: () => Promise<void>
 }
@@ -21,8 +24,10 @@ export default function WeatherSearch({
   setLocation,
   selectedDay,
   setSelectedDay,
-  selectedTimeOfDay,
-  setSelectedTimeOfDay,
+  selectedStartHour,
+  setSelectedStartHour,
+  selectedEndHour,
+  setSelectedEndHour,
   loading,
   handleLocationSubmit
 }: WeatherSearchProps) {
@@ -63,17 +68,47 @@ export default function WeatherSearch({
       </div>
 
       <div className="w-full md:w-40">
-        <label htmlFor="time-select" className="text-sm font-medium block mb-1">
-          Time
+        <label htmlFor="start-time-select" className="text-sm font-medium block mb-1">
+          Start Time
         </label>
-        <Select value={selectedTimeOfDay} onValueChange={setSelectedTimeOfDay}>
-          <SelectTrigger id="time-select" className="h-9">
-            <SelectValue placeholder="Select time" />
+        <Select 
+          value={selectedStartHour.toString()} 
+          onValueChange={(value) => setSelectedStartHour(parseInt(value))}
+        >
+          <SelectTrigger id="start-time-select" className="h-9">
+            <SelectValue placeholder="Select start time" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="morning">Morning (8-12)</SelectItem>
-            <SelectItem value="afternoon">Afternoon (12-5)</SelectItem>
-            <SelectItem value="evening">Evening (5-9)</SelectItem>
+            {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+              <SelectItem key={`start-${hour}`} value={hour.toString()}>
+                {formatHourForDisplay(hour)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="w-full md:w-40">
+        <label htmlFor="end-time-select" className="text-sm font-medium block mb-1">
+          End Time
+        </label>
+        <Select 
+          value={selectedEndHour.toString()} 
+          onValueChange={(value) => setSelectedEndHour(parseInt(value))}
+        >
+          <SelectTrigger id="end-time-select" className="h-9">
+            <SelectValue placeholder="Select end time" />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+              <SelectItem 
+                key={`end-${hour}`} 
+                value={hour.toString()}
+                disabled={hour <= selectedStartHour}
+              >
+                {formatHourForDisplay(hour)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

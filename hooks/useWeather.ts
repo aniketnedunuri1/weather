@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { WeatherData } from "@/app/types/weather";
 import { WeatherApiResponse } from "@/app/types/weatherApi";
 import { convertApiResponseToAppFormat } from "@/app/utils/weatherDataAdapter";
-import { getNextDayOccurrence, adjustTimeOfDay, getNextOccurrence } from "@/lib/dateUtils";
+import { getNextDayOccurrence, adjustTimeToHour, getNextOccurrence, formatHourForDisplay } from "@/lib/dateUtils";
 import { thisFridayWeatherResponse, nextFridayWeatherResponse } from "@/app/mock/weatherApiResponse";
 
 interface WeatherState {
@@ -19,8 +19,10 @@ interface UseWeatherReturn {
   setLocation: (location: string) => void;
   selectedDay: string;
   setSelectedDay: (day: string) => void;
-  selectedTimeOfDay: string;
-  setSelectedTimeOfDay: (timeOfDay: string) => void;
+  selectedStartHour: number;
+  setSelectedStartHour: (hour: number) => void;
+  selectedEndHour: number;
+  setSelectedEndHour: (hour: number) => void;
   meetupTime: Date;
   weatherData: WeatherState;
   loading: boolean;
@@ -47,9 +49,10 @@ function initializeMockWeatherData(): WeatherState {
 export function useWeather(): UseWeatherReturn {
   const [location, setLocation] = useState("");
   const [selectedDay, setSelectedDay] = useState("friday");
-  const [selectedTimeOfDay, setSelectedTimeOfDay] = useState("afternoon");
+  const [selectedStartHour, setSelectedStartHour] = useState(12); // Default to 12 PM
+  const [selectedEndHour, setSelectedEndHour] = useState(17);    // Default to 5 PM
   const [meetupTime, setMeetupTime] = useState(
-    adjustTimeOfDay(getNextDayOccurrence("friday"), "afternoon")
+    adjustTimeToHour(getNextDayOccurrence("friday"), 14) // Default to 2 PM Friday
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -70,9 +73,12 @@ export function useWeather(): UseWeatherReturn {
       // Get the next occurrence (a week later)
       const nextOccurrenceDate = getNextOccurrence(selectedDate);
       
-      // Adjust times based on selected time of day
-      const adjustedSelectedDate = adjustTimeOfDay(selectedDate, selectedTimeOfDay);
-      const adjustedNextOccurrenceDate = adjustTimeOfDay(nextOccurrenceDate, selectedTimeOfDay);
+      // Calculate the middle hour of the selected range for the meetup time
+      const middleHour = Math.floor((selectedStartHour + selectedEndHour) / 2);
+      
+      // Adjust times based on selected hour
+      const adjustedSelectedDate = adjustTimeToHour(selectedDate, middleHour);
+      const adjustedNextOccurrenceDate = adjustTimeToHour(nextOccurrenceDate, middleHour);
       
       // Update the meetup time
       setMeetupTime(adjustedSelectedDate);
@@ -82,18 +88,20 @@ export function useWeather(): UseWeatherReturn {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Mock API response with updated location and description
+      const timeRangeDisplay = `${formatHourForDisplay(selectedStartHour)} - ${formatHourForDisplay(selectedEndHour)}`;
+      
       const updatedThisMeetup = {
         ...thisFridayWeatherResponse,
         resolvedAddress: `${location}, United States`,
         address: location,
-        description: `Weather for ${format(adjustedSelectedDate, 'EEEE, MMMM d')} (${selectedTimeOfDay})`
+        description: `Weather for ${format(adjustedSelectedDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`
       };
       
       const updatedNextMeetup = {
         ...nextFridayWeatherResponse,
         resolvedAddress: `${location}, United States`,
         address: location,
-        description: `Weather for ${format(adjustedNextOccurrenceDate, 'EEEE, MMMM d')} (${selectedTimeOfDay})`
+        description: `Weather for ${format(adjustedNextOccurrenceDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`
       };
       
       setWeatherData({
@@ -112,8 +120,10 @@ export function useWeather(): UseWeatherReturn {
     setLocation,
     selectedDay,
     setSelectedDay,
-    selectedTimeOfDay,
-    setSelectedTimeOfDay,
+    selectedStartHour,
+    setSelectedStartHour,
+    selectedEndHour,
+    setSelectedEndHour,
     meetupTime,
     weatherData,
     loading,

@@ -20,8 +20,10 @@ export default function WeatherMeetupApp() {
     setLocation,
     selectedDay,
     setSelectedDay,
-    selectedTimeOfDay,
-    setSelectedTimeOfDay,
+    selectedStartHour,
+    setSelectedStartHour,
+    selectedEndHour,
+    setSelectedEndHour,
     meetupTime,
     weatherData,
     loading,
@@ -39,8 +41,10 @@ export default function WeatherMeetupApp() {
         setLocation={setLocation}
         selectedDay={selectedDay}
         setSelectedDay={setSelectedDay}
-        selectedTimeOfDay={selectedTimeOfDay}
-        setSelectedTimeOfDay={setSelectedTimeOfDay}
+        selectedStartHour={selectedStartHour}
+        setSelectedStartHour={setSelectedStartHour}
+        selectedEndHour={selectedEndHour}
+        setSelectedEndHour={setSelectedEndHour}
         loading={loading}
         handleLocationSubmit={handleLocationSubmit}
       />
@@ -70,7 +74,8 @@ export default function WeatherMeetupApp() {
               nextMeetupDay={nextFridayWeatherResponse.days[0]}
               thisMeetupDate={meetupTime}
               nextMeetupDate={addDays(meetupTime, 7)}
-              timeOfDay={selectedTimeOfDay}
+              startHour={selectedStartHour}
+              endHour={selectedEndHour}
               dayName={selectedDay}
             />
           </div>
