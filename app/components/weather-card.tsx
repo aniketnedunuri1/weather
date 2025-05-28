@@ -15,13 +15,13 @@ interface WeatherCardProps {
 const getWeatherIcon = (condition: string) => {
   switch (condition) {
     case "sunny":
-      return <Sun className="h-10 w-10 text-yellow-500" />
+      return <Sun className="h-8 w-8 text-yellow-500" />
     case "cloudy":
-      return <Cloud className="h-10 w-10 text-gray-500" />
+      return <Cloud className="h-8 w-8 text-gray-500" />
     case "rainy":
-      return <CloudRain className="h-10 w-10 text-blue-500" />
+      return <CloudRain className="h-8 w-8 text-blue-500" />
     default:
-      return <Sun className="h-10 w-10 text-yellow-500" />
+      return <Sun className="h-8 w-8 text-yellow-500" />
   }
 }
 
@@ -33,44 +33,48 @@ const getSummaryVariant = (summary: string) => {
 
 export default function WeatherCard({ title, weather, isPrimary }: WeatherCardProps) {
   return (
-    <Card className={`h-full relative ${isPrimary ? "ring-2 ring-primary" : ""}`}>
-      {isPrimary && <Badge className="absolute top-2 right-2 z-10">Recommended</Badge>}
+    <Card className={`relative ${isPrimary ? "ring-1 ring-primary" : ""}`}>
+      {isPrimary && <Badge className="absolute top-1 right-1 z-10 text-xs py-0 px-2">Recommended</Badge>}
 
-      <CardHeader>
-        <CardTitle className="text-primary">{title}</CardTitle>
-        <p className="text-sm text-muted-foreground">{format(weather.date, "EEEE, MMMM d")}</p>
+      <CardHeader className="py-2 px-4">
+        <CardTitle className="text-primary text-base">{title}</CardTitle>
+        <p className="text-xs text-muted-foreground">{format(weather.date, "EEEE, MMMM d")}</p>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        <div className="flex justify-center">{getWeatherIcon(weather.condition)}</div>
+      <CardContent className="py-2 px-4 space-y-2">
+        <div className="flex items-center gap-4">
+          <div>{getWeatherIcon(weather.condition)}</div>
+          
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-1">
+                <Thermometer className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm whitespace-nowrap">
+                  {weather.tempHigh}°F / {weather.tempLow}°F
+                </span>
+              </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Thermometer className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              {weather.tempHigh}°F / {weather.tempLow}°F
-            </span>
-          </div>
+              <div className="flex items-center space-x-1">
+                <Droplets className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm whitespace-nowrap">{weather.precipitation}%</span>
+              </div>
 
-          <div className="flex items-center space-x-2">
-            <Droplets className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{weather.precipitation}% chance of rain</span>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Wind className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{weather.windSpeed} mph wind</span>
+              <div className="flex items-center space-x-1">
+                <Wind className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm whitespace-nowrap">{weather.windSpeed} mph</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <Badge variant={getSummaryVariant(weather.summary)} className="w-full justify-center font-semibold">
+        <Badge variant={getSummaryVariant(weather.summary)} className="w-full justify-center text-xs py-1">
           {weather.summary}
         </Badge>
 
         {weather.tags && weather.tags.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm font-medium mb-2">Weather Conditions:</p>
-            <div className="flex flex-wrap">
+          <div className="mt-1">
+            <p className="text-xs font-medium mb-1">Weather Conditions:</p>
+            <div className="flex flex-wrap gap-1">
               {weather.tags.map((tag, index) => (
                 <WeatherTag key={index} tag={tag} />
               ))}

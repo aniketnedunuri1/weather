@@ -213,7 +213,6 @@ export default function WeatherMeetupApp() {
 
           {/* Weather Visualization */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Weather Visualization</h2>
             <SimpleCombinedChart 
               thisFridayDay={thisFridayWeatherResponse.days[0]}
               nextFridayDay={nextFridayWeatherResponse.days[0]}

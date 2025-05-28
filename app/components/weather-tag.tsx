@@ -8,10 +8,10 @@ interface WeatherTagProps {
   size?: "sm" | "md" | "lg"
 }
 
-export default function WeatherTag({ tag, size = "md" }: WeatherTagProps) {
+export default function WeatherTag({ tag, size = "sm" }: WeatherTagProps) {
   const sizeClasses = {
-    sm: "text-xs px-2 py-0.5",
-    md: "text-sm px-2.5 py-0.5",
+    sm: "text-xs px-1.5 py-0",
+    md: "text-sm px-2 py-0.5",
     lg: "text-base px-3 py-1"
   }
   
@@ -19,12 +19,12 @@ export default function WeatherTag({ tag, size = "md" }: WeatherTagProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Badge variant="outline" className={`${sizeClasses[size]} font-medium mr-2 mb-2`}>
-            <span className="mr-1">{tag.emoji}</span> {tag.label}
+          <Badge variant="outline" className={`${sizeClasses[size]} font-medium mr-1 mb-1`}>
+            <span className="mr-0.5">{tag.emoji}</span> {tag.label}
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{tag.description}</p>
+          <p className="text-xs">{tag.description}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
