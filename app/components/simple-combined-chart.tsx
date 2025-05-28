@@ -25,19 +25,34 @@ interface SimpleCombinedChartProps {
   nextFridayDay: WeatherDay
   thisFridayDate: Date
   nextFridayDate: Date
+  timeOfDay?: string
+  dayName?: string
 }
 
 export default function SimpleCombinedChart({ 
   thisFridayDay, 
   nextFridayDay,
   thisFridayDate,
-  nextFridayDate
+  nextFridayDate,
+  timeOfDay = "afternoon",
+  dayName = "friday"
 }: SimpleCombinedChartProps) {
   const [activeTab, setActiveTab] = useState("temperature")
   
   // Format the dates for display
   const thisFridayFormatted = format(thisFridayDate, "MMM d")
   const nextFridayFormatted = format(nextFridayDate, "MMM d")
+  
+  // Get day name for display
+  const dayDisplayName = format(thisFridayDate, "EEEE")
+  
+  // Get time of day for display
+  const timeOfDayMap = {
+    morning: "Morning (8-12)",
+    afternoon: "Afternoon (12-5)",
+    evening: "Evening (5-9)"
+  }
+  const timeOfDayDisplay = timeOfDayMap[timeOfDay as keyof typeof timeOfDayMap]
   
   // Format hours data for charts
   const formatHourlyData = () => {
@@ -68,7 +83,7 @@ export default function SimpleCombinedChart({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Weather Comparison</CardTitle>
+        <CardTitle>Weather Comparison for {dayDisplayName} {timeOfDayDisplay}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
