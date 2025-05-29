@@ -4,7 +4,7 @@
 import { useState, useCallback, useRef } from "react";
 import { format } from "date-fns";
 import { WeatherData } from "@/app/types/weather";
-import { WeatherApiResponse } from "@/app/types/weatherApi";
+import { WeatherApiResponse, WeatherDay } from "@/app/types/weatherApi";
 import { convertApiResponseToAppFormat } from "@/app/utils/weatherDataAdapter";
 import { getNextDayOccurrence, adjustTimeToHour, getNextOccurrence, formatHourForDisplay } from "@/lib/dateUtils";
 import { findDayInForecast, findNextOccurrenceInForecast } from "@/lib/weatherUtils";
@@ -24,6 +24,14 @@ interface ApiState {
 // Interface for the weather data cache
 interface WeatherCache {
   [location: string]: WeatherApiResponse;
+}
+
+// Interface for day processing parameters
+interface DayProcessingParams {
+  data: WeatherApiResponse;
+  dayName: string;
+  startHour: number;
+  endHour: number;
 }
 
 interface UseWeatherReturn {
@@ -153,13 +161,73 @@ export function useWeather(): UseWeatherReturn {
   }, []);  // Removed apiState.data dependency since we're using the cache
 
   /**
+   * Create a formatted time range string
+   */
+  const getTimeRangeDisplay = useCallback((start: number, end: number) => {
+    return `${formatHourForDisplay(start)} - ${formatHourForDisplay(end)}`;
+  }, []);
+
+  /**
+   * Find and prepare weather data for a specific day
+   */
+  const prepareDayData = useCallback((params: {
+    data: WeatherApiResponse;
+    dayName: string;
+    date: Date;
+    timeRangeDisplay: string;
+  }) => {
+    const { data, dayName, date, timeRangeDisplay } = params;
+    const day = findDayInForecast(data, dayName);
+    
+    if (!day) return null;
+    
+    return {
+      ...data,
+      days: [day],
+      description: `Weather for ${format(date, 'EEEE, MMMM d')} (${timeRangeDisplay})`
+    };
+  }, []);
+
+  /**
+   * Create an empty day data structure when no data is available
+   */
+  const createEmptyDayData = useCallback((params: {
+    data: WeatherApiResponse;
+    date: Date;
+    timeRangeDisplay: string;
+  }) => {
+    const { data, date, timeRangeDisplay } = params;
+    
+    // Clone the first day from the original data to ensure we have all required fields
+    const emptyDay = { ...data.days[0] };
+    // Update with empty values
+    emptyDay.datetime = format(date, 'yyyy-MM-dd');
+    emptyDay.tempmax = 0;
+    emptyDay.tempmin = 0;
+    emptyDay.temp = 0;
+    emptyDay.precipprob = 0;
+    emptyDay.windspeed = 0;
+    emptyDay.conditions = 'Unknown';
+    emptyDay.hours = [];
+    
+    return {
+      ...data,
+      description: `Weather for ${format(date, 'EEEE, MMMM d')} (${timeRangeDisplay})`,
+      days: [emptyDay]
+    };
+  }, []);
+
+  /**
    * Process weather data for the selected day and time range
    */
-  const processWeatherData = useCallback((data: WeatherApiResponse | null) => {
+  const processWeatherData = useCallback((data: WeatherApiResponse | null, dayOverride?: string) => {
     if (!data) return;
-
+    
+    // Use the provided day override or fall back to the selected day state
+    const dayToProcess = dayOverride || selectedDay;
+    
     // Get the selected day's date
-    const selectedDate = getNextDayOccurrence(selectedDay);
+    const selectedDate = getNextDayOccurrence(dayToProcess);
     // Get the next occurrence (a week later)
     const nextOccurrenceDate = getNextOccurrence(selectedDate);
     
@@ -173,86 +241,59 @@ export function useWeather(): UseWeatherReturn {
     // Update the meetup time
     setMeetupTime(adjustedSelectedDate);
 
-    // Find the relevant days in the forecast
-    const thisMeetupDay = findDayInForecast(data, selectedDay);
-    const nextMeetupDay = findNextOccurrenceInForecast(
+    // Format time range for display
+    const timeRangeDisplay = getTimeRangeDisplay(selectedStartHour, selectedEndHour);
+    
+    // Prepare this meetup day data
+    const thisMeetupData = prepareDayData({
       data, 
-      selectedDay, 
-      selectedDate
+      dayName: dayToProcess, 
+      date: adjustedSelectedDate,
+      timeRangeDisplay
+    });
+    
+    if (!thisMeetupData) return;
+    
+    // Try to find the next meetup day
+    const nextMeetupDay = findNextOccurrenceInForecast(data, dayToProcess, selectedDate);
+    
+    // Prepare next meetup data (or create empty data if not found)
+    const nextMeetupData = nextMeetupDay 
+      ? prepareDayData({
+          data, 
+          dayName: dayToProcess, 
+          date: adjustedNextOccurrenceDate,
+          timeRangeDisplay
+        })
+      : createEmptyDayData({
+          data,
+          date: adjustedNextOccurrenceDate,
+          timeRangeDisplay
+        });
+    
+    if (!nextMeetupData) return;
+    
+    // Convert API data to app format
+    const thisMeetupProcessed = convertApiResponseToAppFormat(
+      thisMeetupData, 
+      adjustedSelectedDate, 
+      selectedStartHour, 
+      selectedEndHour
     );
     
-    // Format time range for display
-    const timeRangeDisplay = `${formatHourForDisplay(selectedStartHour)} - ${formatHourForDisplay(selectedEndHour)}`;
+    const nextMeetupProcessed = convertApiResponseToAppFormat(
+      nextMeetupData, 
+      adjustedNextOccurrenceDate, 
+      selectedStartHour, 
+      selectedEndHour
+    );
     
-    // If we found the days, convert them to our app format
-    if (thisMeetupDay) {
-      
-      
-      // Create a clean copy of the API response with just this meetup day
-      const thisMeetupData = {
-        ...data,
-        days: [thisMeetupDay],
-        description: `Weather for ${format(adjustedSelectedDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`
-      };
-      
-      // Process next meetup day
-      let nextMeetupData;
-      
-      if (nextMeetupDay) {
-        
-        
-        // Create a clean copy of the API response with just the next meetup day
-        nextMeetupData = {
-          ...data,
-          days: [nextMeetupDay],
-          description: `Weather for ${format(adjustedNextOccurrenceDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`
-        };
-      } else {
-
-        // Create a complete API response structure with empty data
-        // Clone the first day from the original data to ensure we have all required fields
-        const emptyDay = { ...data.days[0] };
-        // Update with empty values
-        emptyDay.datetime = format(adjustedNextOccurrenceDate, 'yyyy-MM-dd');
-        emptyDay.tempmax = 0;
-        emptyDay.tempmin = 0;
-        emptyDay.temp = 0;
-        emptyDay.precipprob = 0;
-        emptyDay.windspeed = 0;
-        emptyDay.conditions = 'Unknown';
-        emptyDay.hours = [];
-        
-        nextMeetupData = {
-          ...data, // Clone all properties from original data
-          description: `Weather for ${format(adjustedNextOccurrenceDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`,
-          days: [emptyDay]
-        };
-      }
-      
-      // Convert API data to app format
-      const thisMeetupProcessed = convertApiResponseToAppFormat(
-        thisMeetupData, 
-        adjustedSelectedDate, 
-        selectedStartHour, 
-        selectedEndHour
-      );
-      
-      const nextMeetupProcessed = convertApiResponseToAppFormat(
-        nextMeetupData, 
-        adjustedNextOccurrenceDate, 
-        selectedStartHour, 
-        selectedEndHour
-      );
-      
-
-      
-      // Update the weather data state
-      setWeatherData({
-        thisMeetup: thisMeetupProcessed,
-        nextMeetup: nextMeetupProcessed
-      });
-    }
-  }, [selectedDay, selectedStartHour, selectedEndHour]);
+    // Update the weather data state
+    setWeatherData({
+      thisMeetup: thisMeetupProcessed,
+      nextMeetup: nextMeetupProcessed
+    });
+  }, [selectedDay, selectedStartHour, selectedEndHour, prepareDayData, createEmptyDayData, getTimeRangeDisplay]);
 
   /**
    * Handle location submission and fetch weather data
@@ -279,31 +320,38 @@ export function useWeather(): UseWeatherReturn {
         }
       } else {
         console.log('Using cached data for current location');
-        // Use the cached data
-        if (weatherCache.current[normalizedLocation]) {
-          processWeatherData(weatherCache.current[normalizedLocation]);
-        }
+        updateWeatherDataForSelection();
       }
     } catch (error) {
       console.error('Error in handleLocationSubmit:', error);
     }
   };
 
-  // When selected day or time range changes, process the data if we have it
-  const updateWeatherDataForSelection = useCallback(() => {
-    // Get data from cache for the current location
+  /**
+   * Get weather data from cache or API state
+   */
+  const getWeatherData = useCallback(() => {
     const normalizedLocation = location.trim().toLowerCase();
     const cachedData = weatherCache.current[normalizedLocation];
     
     if (cachedData) {
-      console.log(`Processing cached data for ${normalizedLocation} with selected day: ${selectedDay}`);
-      processWeatherData(cachedData);
-    } else if (apiState.data) {
-      // Fallback to apiState data if cache is not available
-      console.log(`No cached data found, using API state data with selected day: ${selectedDay}`);
-      processWeatherData(apiState.data);
+      return cachedData;
     }
-  }, [location, selectedDay, selectedStartHour, selectedEndHour, processWeatherData, apiState.data]);
+    
+    return apiState.data;
+  }, [location, apiState.data]);
+
+  /**
+   * Update weather data when selection changes
+   */
+  const updateWeatherDataForSelection = useCallback((dayOverride?: string) => {
+    const data = getWeatherData();
+    if (!data) return;
+    
+    const dayToUse = dayOverride || selectedDay;
+    console.log(`Processing weather data for ${dayToUse}`);
+    processWeatherData(data, dayToUse);
+  }, [getWeatherData, processWeatherData, selectedDay]);
 
 
   return {
@@ -314,116 +362,19 @@ export function useWeather(): UseWeatherReturn {
       // First update the selected day state
       setSelectedDay(day);
       
-      // Only update if we have cached data for the current location
-      const normalizedLocation = location.trim().toLowerCase();
-      if (weatherCache.current[normalizedLocation]) {
-        console.log(`Day changed to ${day}, using cached data`);
-        
-        // Process the cached data with the new day value
-        const cachedData = weatherCache.current[normalizedLocation];
-        if (cachedData) {
-          // Use the new day value directly instead of relying on the state
-          const processDataWithNewDay = (data: WeatherApiResponse) => {
-            if (!data) return;
-            
-            // Get the selected day's date using the new day value
-            const selectedDate = getNextDayOccurrence(day);
-            // Get the next occurrence (a week later)
-            const nextOccurrenceDate = getNextOccurrence(selectedDate);
-            
-            // Calculate the middle hour of the selected range for the meetup time
-            const middleHour = Math.floor((selectedStartHour + selectedEndHour) / 2);
-            
-            // Adjust times based on selected hour
-            const adjustedSelectedDate = adjustTimeToHour(selectedDate, middleHour);
-            const adjustedNextOccurrenceDate = adjustTimeToHour(nextOccurrenceDate, middleHour);
-            
-            // Update the meetup time
-            setMeetupTime(adjustedSelectedDate);
-
-            // Find the relevant days in the forecast using the new day value
-            const thisMeetupDay = findDayInForecast(data, day);
-            const nextMeetupDay = findNextOccurrenceInForecast(data, day, selectedDate);
-            
-            // Format time range for display
-            const timeRangeDisplay = `${formatHourForDisplay(selectedStartHour)} - ${formatHourForDisplay(selectedEndHour)}`;
-            
-            // Process the data if we found the day
-            if (thisMeetupDay) {
-              // Create a clean copy of the API response with just this meetup day
-              const thisMeetupData = {
-                ...data,
-                days: [thisMeetupDay],
-                description: `Weather for ${format(adjustedSelectedDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`
-              };
-              
-              // Process next meetup day
-              let nextMeetupData;
-              
-              if (nextMeetupDay) {
-                // Create a clean copy of the API response with just the next meetup day
-                nextMeetupData = {
-                  ...data,
-                  days: [nextMeetupDay],
-                  description: `Weather for ${format(adjustedNextOccurrenceDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`
-                };
-              } else {
-                // Create a complete API response structure with empty data
-                // Clone the first day from the original data to ensure we have all required fields
-                const emptyDay = { ...data.days[0] };
-                // Update with empty values
-                emptyDay.datetime = format(adjustedNextOccurrenceDate, 'yyyy-MM-dd');
-                emptyDay.tempmax = 0;
-                emptyDay.tempmin = 0;
-                emptyDay.temp = 0;
-                emptyDay.precipprob = 0;
-                emptyDay.windspeed = 0;
-                emptyDay.conditions = 'Unknown';
-                emptyDay.hours = [];
-                
-                nextMeetupData = {
-                  ...data, // Clone all properties from original data
-                  description: `Weather for ${format(adjustedNextOccurrenceDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`,
-                  days: [emptyDay]
-                };
-              }
-              
-              // Convert API data to app format
-              const thisMeetupProcessed = convertApiResponseToAppFormat(
-                thisMeetupData, 
-                adjustedSelectedDate, 
-                selectedStartHour, 
-                selectedEndHour
-              );
-              
-              const nextMeetupProcessed = convertApiResponseToAppFormat(
-                nextMeetupData, 
-                adjustedNextOccurrenceDate, 
-                selectedStartHour, 
-                selectedEndHour
-              );
-              
-              // Update the weather data state
-              setWeatherData({
-                thisMeetup: thisMeetupProcessed,
-                nextMeetup: nextMeetupProcessed
-              });
-            }
-          };
-          
-          // Process the data with the new day value
-          processDataWithNewDay(cachedData);
-        }
+      // Process weather data with the new day value
+      if (getWeatherData()) {
+        console.log(`Day changed to ${day}, updating weather data`);
+        updateWeatherDataForSelection(day);
       }
     },
     selectedStartHour,
     setSelectedStartHour: (hour: number) => {
       setSelectedStartHour(hour);
       
-      // Only update if we have cached data for the current location
-      const normalizedLocation = location.trim().toLowerCase();
-      if (weatherCache.current[normalizedLocation]) {
-        console.log(`Start hour changed to ${hour}, using cached data`);
+      // Update weather data if available
+      if (getWeatherData()) {
+        console.log(`Start hour changed to ${hour}, updating weather data`);
         updateWeatherDataForSelection();
       }
     },
@@ -431,10 +382,9 @@ export function useWeather(): UseWeatherReturn {
     setSelectedEndHour: (hour: number) => {
       setSelectedEndHour(hour);
       
-      // Only update if we have cached data for the current location
-      const normalizedLocation = location.trim().toLowerCase();
-      if (weatherCache.current[normalizedLocation]) {
-        console.log(`End hour changed to ${hour}, using cached data`);
+      // Update weather data if available
+      if (getWeatherData()) {
+        console.log(`End hour changed to ${hour}, updating weather data`);
         updateWeatherDataForSelection();
       }
     },
