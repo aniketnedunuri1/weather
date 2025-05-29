@@ -1,7 +1,7 @@
 /**
  * Custom hook for managing weather data and user interactions
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { format } from "date-fns";
 import { WeatherData } from "@/app/types/weather";
 import { WeatherApiResponse } from "@/app/types/weatherApi";
@@ -19,6 +19,11 @@ interface ApiState {
   data: WeatherApiResponse | null;
   loading: boolean;
   error: string | null;
+}
+
+// Interface for the weather data cache
+interface WeatherCache {
+  [location: string]: WeatherApiResponse;
 }
 
 interface UseWeatherReturn {
@@ -73,12 +78,33 @@ export function useWeather(): UseWeatherReturn {
     thisMeetup: emptyWeatherData,
     nextMeetup: emptyWeatherData
   });
+  
+  // Weather data cache - store API responses by location
+  const weatherCache = useRef<WeatherCache>({});
+  
+  // Current location reference - used to determine if we need to fetch new data
+  const currentLocationRef = useRef<string>("");
 
   /**
    * Fetch weather data from the API
    */
   const fetchWeatherData = useCallback(async (locationQuery: string) => {
     try {
+      const normalizedLocation = locationQuery.trim().toLowerCase();
+      
+      // Check if we already have cached data for this location
+      if (weatherCache.current[normalizedLocation]) {
+        console.log('Using cached weather data for:', normalizedLocation);
+        
+        // Update API state with the cached data
+        setApiState({
+          data: weatherCache.current[normalizedLocation],
+          loading: false,
+          error: null
+        });
+        
+        return weatherCache.current[normalizedLocation];
+      }
       
       // Update API state to loading
       setApiState({
@@ -88,7 +114,7 @@ export function useWeather(): UseWeatherReturn {
       });
       
       // Make the API call to our server-side API route
-      const apiUrl = `/api/weather?location=${encodeURIComponent(locationQuery.trim())}`;
+      const apiUrl = `/api/weather?location=${encodeURIComponent(normalizedLocation)}`;
       
       const response = await fetch(apiUrl);
       
@@ -99,6 +125,10 @@ export function useWeather(): UseWeatherReturn {
       }
       
       const data = await response.json() as WeatherApiResponse;
+      
+      // Cache the API response for this location
+      weatherCache.current[normalizedLocation] = data;
+      currentLocationRef.current = normalizedLocation;
       
       // Update API state with the fetched data
       setApiState({
@@ -120,7 +150,7 @@ export function useWeather(): UseWeatherReturn {
       
       return null;
     }
-  }, [apiState.data]);
+  }, []);  // Removed apiState.data dependency since we're using the cache
 
   /**
    * Process weather data for the selected day and time range
@@ -183,7 +213,7 @@ export function useWeather(): UseWeatherReturn {
         // Clone the first day from the original data to ensure we have all required fields
         const emptyDay = { ...data.days[0] };
         // Update with empty values
-        emptyDay.datetime = adjustedNextOccurrenceDate.toISOString().split('T')[0];
+        emptyDay.datetime = format(adjustedNextOccurrenceDate, 'yyyy-MM-dd');
         emptyDay.tempmax = 0;
         emptyDay.tempmin = 0;
         emptyDay.temp = 0;
@@ -228,22 +258,31 @@ export function useWeather(): UseWeatherReturn {
    * Handle location submission and fetch weather data
    */
   const handleLocationSubmit = async () => {
-
     if (!location.trim()) {
-
       return;
     }
     
+    const normalizedLocation = location.trim().toLowerCase();
+    
     try {
-
-      // Fetch the weather data
-      const data = await fetchWeatherData(location);
+      // Check if we need to fetch new data or can use cached data
+      const needsFetch = currentLocationRef.current !== normalizedLocation;
       
-
-      
-      // Process the data if we got it
-      if (data) {
-        processWeatherData(data);
+      if (needsFetch) {
+        console.log('Location changed, fetching new weather data');
+        // Fetch the weather data
+        const data = await fetchWeatherData(location);
+        
+        // Process the data if we got it
+        if (data) {
+          processWeatherData(data);
+        }
+      } else {
+        console.log('Using cached data for current location');
+        // Use the cached data
+        if (weatherCache.current[normalizedLocation]) {
+          processWeatherData(weatherCache.current[normalizedLocation]);
+        }
       }
     } catch (error) {
       console.error('Error in handleLocationSubmit:', error);
@@ -252,47 +291,150 @@ export function useWeather(): UseWeatherReturn {
 
   // When selected day or time range changes, process the data if we have it
   const updateWeatherDataForSelection = useCallback(() => {
-    if (apiState.data) {
+    // Get data from cache for the current location
+    const normalizedLocation = location.trim().toLowerCase();
+    const cachedData = weatherCache.current[normalizedLocation];
+    
+    if (cachedData) {
+      console.log(`Processing cached data for ${normalizedLocation} with selected day: ${selectedDay}`);
+      processWeatherData(cachedData);
+    } else if (apiState.data) {
+      // Fallback to apiState data if cache is not available
+      console.log(`No cached data found, using API state data with selected day: ${selectedDay}`);
       processWeatherData(apiState.data);
     }
-  }, [apiState.data, processWeatherData]);
+  }, [location, selectedDay, selectedStartHour, selectedEndHour, processWeatherData, apiState.data]);
+
 
   return {
     location,
     setLocation,
     selectedDay,
     setSelectedDay: (day: string) => {
-
+      // First update the selected day state
       setSelectedDay(day);
       
-      // Only update if we have real API data
-      if (apiState.data) {
+      // Only update if we have cached data for the current location
+      const normalizedLocation = location.trim().toLowerCase();
+      if (weatherCache.current[normalizedLocation]) {
+        console.log(`Day changed to ${day}, using cached data`);
+        
+        // Process the cached data with the new day value
+        const cachedData = weatherCache.current[normalizedLocation];
+        if (cachedData) {
+          // Use the new day value directly instead of relying on the state
+          const processDataWithNewDay = (data: WeatherApiResponse) => {
+            if (!data) return;
+            
+            // Get the selected day's date using the new day value
+            const selectedDate = getNextDayOccurrence(day);
+            // Get the next occurrence (a week later)
+            const nextOccurrenceDate = getNextOccurrence(selectedDate);
+            
+            // Calculate the middle hour of the selected range for the meetup time
+            const middleHour = Math.floor((selectedStartHour + selectedEndHour) / 2);
+            
+            // Adjust times based on selected hour
+            const adjustedSelectedDate = adjustTimeToHour(selectedDate, middleHour);
+            const adjustedNextOccurrenceDate = adjustTimeToHour(nextOccurrenceDate, middleHour);
+            
+            // Update the meetup time
+            setMeetupTime(adjustedSelectedDate);
 
-        updateWeatherDataForSelection();
-      } else {
-
-        // Don't update with mock data
+            // Find the relevant days in the forecast using the new day value
+            const thisMeetupDay = findDayInForecast(data, day);
+            const nextMeetupDay = findNextOccurrenceInForecast(data, day, selectedDate);
+            
+            // Format time range for display
+            const timeRangeDisplay = `${formatHourForDisplay(selectedStartHour)} - ${formatHourForDisplay(selectedEndHour)}`;
+            
+            // Process the data if we found the day
+            if (thisMeetupDay) {
+              // Create a clean copy of the API response with just this meetup day
+              const thisMeetupData = {
+                ...data,
+                days: [thisMeetupDay],
+                description: `Weather for ${format(adjustedSelectedDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`
+              };
+              
+              // Process next meetup day
+              let nextMeetupData;
+              
+              if (nextMeetupDay) {
+                // Create a clean copy of the API response with just the next meetup day
+                nextMeetupData = {
+                  ...data,
+                  days: [nextMeetupDay],
+                  description: `Weather for ${format(adjustedNextOccurrenceDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`
+                };
+              } else {
+                // Create a complete API response structure with empty data
+                // Clone the first day from the original data to ensure we have all required fields
+                const emptyDay = { ...data.days[0] };
+                // Update with empty values
+                emptyDay.datetime = format(adjustedNextOccurrenceDate, 'yyyy-MM-dd');
+                emptyDay.tempmax = 0;
+                emptyDay.tempmin = 0;
+                emptyDay.temp = 0;
+                emptyDay.precipprob = 0;
+                emptyDay.windspeed = 0;
+                emptyDay.conditions = 'Unknown';
+                emptyDay.hours = [];
+                
+                nextMeetupData = {
+                  ...data, // Clone all properties from original data
+                  description: `Weather for ${format(adjustedNextOccurrenceDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`,
+                  days: [emptyDay]
+                };
+              }
+              
+              // Convert API data to app format
+              const thisMeetupProcessed = convertApiResponseToAppFormat(
+                thisMeetupData, 
+                adjustedSelectedDate, 
+                selectedStartHour, 
+                selectedEndHour
+              );
+              
+              const nextMeetupProcessed = convertApiResponseToAppFormat(
+                nextMeetupData, 
+                adjustedNextOccurrenceDate, 
+                selectedStartHour, 
+                selectedEndHour
+              );
+              
+              // Update the weather data state
+              setWeatherData({
+                thisMeetup: thisMeetupProcessed,
+                nextMeetup: nextMeetupProcessed
+              });
+            }
+          };
+          
+          // Process the data with the new day value
+          processDataWithNewDay(cachedData);
+        }
       }
     },
     selectedStartHour,
     setSelectedStartHour: (hour: number) => {
-
       setSelectedStartHour(hour);
       
-      // Only update if we have real API data
-      if (apiState.data) {
-
+      // Only update if we have cached data for the current location
+      const normalizedLocation = location.trim().toLowerCase();
+      if (weatherCache.current[normalizedLocation]) {
+        console.log(`Start hour changed to ${hour}, using cached data`);
         updateWeatherDataForSelection();
       }
     },
     selectedEndHour,
     setSelectedEndHour: (hour: number) => {
-
       setSelectedEndHour(hour);
       
-      // Only update if we have real API data
-      if (apiState.data) {
-
+      // Only update if we have cached data for the current location
+      const normalizedLocation = location.trim().toLowerCase();
+      if (weatherCache.current[normalizedLocation]) {
+        console.log(`End hour changed to ${hour}, using cached data`);
         updateWeatherDataForSelection();
       }
     },

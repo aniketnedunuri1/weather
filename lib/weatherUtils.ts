@@ -38,22 +38,29 @@ export function findDayInForecast(
   }
   // If it's the same day (daysUntilTarget === 0), we want to use today
   
-
-  
   // Calculate the target date
   const targetDate = new Date(today);
   targetDate.setDate(today.getDate() + daysUntilTarget);
-
   
   // Format the target date as YYYY-MM-DD for comparison
   const targetDateStr = format(targetDate, 'yyyy-MM-dd');
-
   
-  // // Find the day in the forecast that matches our target date
+  console.log(`Looking for ${targetDay} (${targetDateStr}) in forecast`);
+  
+  // First try to find the exact date match
   for (const day of forecast.days) {
-    //console.log(`Checking forecast day: ${day.datetime}, tempHigh: ${day.tempmax}, tempLow: ${day.tempmin}, precip: ${day.precipprob}`);
     if (day.datetime === targetDateStr) {
-      //console.log(`Found exact match: ${day.datetime}`);
+      console.log(`Found exact date match for ${targetDay}: ${day.datetime}`);
+      return day;
+    }
+  }
+  
+  // If we can't find the exact date, try to find by day of week
+  console.log(`Exact date not found, looking for day of week match for ${targetDay}`);
+  for (const day of forecast.days) {
+    const dayDate = new Date(day.datetime);
+    if (dayDate.getDay() === targetDayIndex) {
+      console.log(`Found day of week match for ${targetDay}: ${day.datetime}`);
       return day;
     }
   }
@@ -115,8 +122,7 @@ export function findNextOccurrenceInForecast(
   targetDate.setDate(afterDate.getDate() + daysUntilTarget);
   
   // Format the target date as YYYY-MM-DD for comparison
-  const targetDateStr = targetDate.toISOString().split('T')[0];
-  
+  const targetDateStr = format(targetDate, 'yyyy-MM-dd');  
 
   
   // Find the day in the forecast that matches our target date

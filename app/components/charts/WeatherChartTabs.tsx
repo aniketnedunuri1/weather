@@ -14,11 +14,12 @@ import {
   AreaChart,
   Area
 } from "recharts"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatHourForDisplay, getTimeRangeDisplay } from "@/lib/dateUtils"
+import { useWeather } from "@/hooks/useWeather"
 
 interface WeatherChartTabsProps {
   thisMeetupDate: Date
@@ -26,6 +27,14 @@ interface WeatherChartTabsProps {
   startHour: number
   endHour: number
   dayName: string
+}
+
+interface HourlyDataPoint {
+  name: string
+  temp: number
+  precip: number
+  wind: number
+  hour: number
 }
 
 export default function WeatherChartTabs({ 
@@ -36,6 +45,7 @@ export default function WeatherChartTabs({
   dayName = "friday"
 }: WeatherChartTabsProps) {
   const [activeTab, setActiveTab] = useState("temperature")
+  const { weatherData } = useWeather()
   
   // Format the dates for display
   const thisMeetupFormatted = format(thisMeetupDate, "MMM d")
@@ -44,27 +54,47 @@ export default function WeatherChartTabs({
   // Get day name for display
   const dayDisplayName = format(thisMeetupDate, "EEEE")
   
-  // Generate placeholder data for the charts based on time range
-  const generateHourlyData = (date: Date, startHour: number, endHour: number) => {
-    const hours = []
+  // Get time range display
+  const timeRange = getTimeRangeDisplay(startHour, endHour)
+  
+  // Convert hourly data from the weather API to chart format
+  const convertHourlyDataToChartFormat = (hourlyData: any[]): HourlyDataPoint[] => {
+    if (!hourlyData || hourlyData.length === 0) {
+      return generatePlaceholderData(startHour, endHour)
+    }
+    
+    return hourlyData.map(hour => ({
+      name: hour.time,
+      temp: hour.temp,
+      precip: hour.precipitation,
+      wind: 10, // Default wind value if not available
+      hour: parseInt(hour.time)
+    }))
+  }
+  
+  // Generate placeholder data as fallback
+  const generatePlaceholderData = (startHour: number, endHour: number): HourlyDataPoint[] => {
+    const hours: HourlyDataPoint[] = []
     for (let hour = startHour; hour <= endHour; hour++) {
       hours.push({
         name: formatHourForDisplay(hour),
-        temp: Math.round(65 + Math.random() * 10), // Random temperature between 65-75
-        precip: Math.round(Math.random() * 50), // Random precipitation 0-50%
-        wind: Math.round(5 + Math.random() * 10), // Random wind 5-15 mph
+        temp: Math.round(65 + Math.random() * 10),
+        precip: Math.round(Math.random() * 50),
+        wind: Math.round(5 + Math.random() * 10),
         hour: hour
       })
     }
     return hours
   }
   
-  // Generate data for charts
-  const thisMeetupHours = generateHourlyData(thisMeetupDate, startHour, endHour)
-  const nextMeetupHours = generateHourlyData(nextMeetupDate, startHour, endHour)
-  
-  // Get time range display
-  const timeRange = getTimeRangeDisplay(startHour, endHour)
+  // Get hourly data from the weather data
+  const thisMeetupHours = weatherData.thisMeetup.hourlyData?.length > 0 
+    ? convertHourlyDataToChartFormat(weatherData.thisMeetup.hourlyData)
+    : generatePlaceholderData(startHour, endHour)
+    
+  const nextMeetupHours = weatherData.nextMeetup.hourlyData?.length > 0
+    ? convertHourlyDataToChartFormat(weatherData.nextMeetup.hourlyData)
+    : generatePlaceholderData(startHour, endHour)
   
   // Combine data for comparison chart
   const combinedData: any[] = []
@@ -85,6 +115,9 @@ export default function WeatherChartTabs({
       })
     }
   }
+  
+  // Sort combined data by hour
+  combinedData.sort((a, b) => a.hour - b.hour)
   
   // Sort by hour
   combinedData.sort((a: any, b: any) => a.hour - b.hour)
