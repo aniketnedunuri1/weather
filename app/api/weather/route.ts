@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { writeFile } from 'fs/promises';
+import path from 'path';
 
 // Get API key from environment variables
 const API_KEY = process.env.WEATHER_API_KEY;
@@ -70,6 +72,16 @@ export async function GET(request: NextRequest) {
     // Log the API response for debugging
     console.log('Visual Crossing API Response:');
     console.log(JSON.stringify(data, null, 2));
+    
+    // Write the response to the JSON file
+    try {
+      const filePath = path.join(process.cwd(), 'weather-api-response.json');
+      await writeFile(filePath, JSON.stringify(data, null, 2));
+      console.log(`Weather data for ${location} saved to weather-api-response.json`);
+    } catch (writeError) {
+      console.error('Error writing to weather-api-response.json:', writeError);
+      // Continue even if writing fails - don't block the API response
+    }
     
     return NextResponse.json(data);
   } catch (error) {

@@ -29,6 +29,8 @@ export default function WeatherMeetupApp() {
     handleLocationSubmit
   } = useWeather()
 
+  console.log("weatherDataPage", weatherData)
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <h1 className="text-4xl font-bold text-center mb-6">Park Meetup Weather</h1>
@@ -73,6 +75,10 @@ export default function WeatherMeetupApp() {
               startHour={selectedStartHour}
               endHour={selectedEndHour}
               dayName={selectedDay}
+              weatherData={{
+                thisMeetup: weatherData.thisMeetup,
+                nextMeetup: weatherData.nextMeetup
+              }} 
             />
           </div>
         </>

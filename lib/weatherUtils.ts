@@ -31,7 +31,7 @@ export function findDayInForecast(
   
   // Calculate how many days until the target day
   let daysUntilTarget = targetDayIndex - today.getDay();
-  console.log('daysUntilTarget', daysUntilTarget);
+  console.log('daysUntilTargetthis', daysUntilTarget);
   if (daysUntilTarget < 0) {
     // If target day is earlier in the week, find next week's occurrence
     daysUntilTarget += 7;
@@ -40,6 +40,7 @@ export function findDayInForecast(
   
   // Calculate the target date
   const targetDate = new Date(today);
+  console.log("targetDateTd", targetDate);
   targetDate.setDate(today.getDate() + daysUntilTarget);
   
   // Format the target date as YYYY-MM-DD for comparison
@@ -56,14 +57,14 @@ export function findDayInForecast(
   }
   
   // If we can't find the exact date, try to find by day of week
-  console.log(`Exact date not found, looking for day of week match for ${targetDay}`);
-  for (const day of forecast.days) {
-    const dayDate = new Date(day.datetime);
-    if (dayDate.getDay() === targetDayIndex) {
-      console.log(`Found day of week match for ${targetDay}: ${day.datetime}`);
-      return day;
-    }
-  }
+  // console.log(`Exact date not found, looking for day of week match for ${targetDay}`);
+  // for (const day of forecast.days) {
+  //   const dayDate = new Date(day.datetime);
+  //   if (dayDate.getDay() === targetDayIndex) {
+  //     console.log(`Found day of week match for ${targetDay}: ${day.datetime}`);
+  //     return day;
+  //   }
+  // }
   
   // If we can't find the exact date, find the closest day with matching day of week
   // console.log(`Exact date not found, looking for closest ${targetDay}`);
@@ -111,14 +112,15 @@ export function findNextOccurrenceInForecast(
   const afterDateDayIndex = afterDate.getDay();
   console.log("afterDateDayIndex", afterDateDayIndex);
   let daysUntilTarget = targetDayIndex - afterDateDayIndex;
-  if (daysUntilTarget <= 0) {
+  console.log("daysUntilTarget", daysUntilTarget);
+  if (daysUntilTarget < 0) {
     // If target day is earlier in the week, find next week's occurrence
     daysUntilTarget += 7;
   }
   // If it's the same day (daysUntilTarget === 0), we want to use that day
   
 
-  
+  console.log("daysUntilTarget2", daysUntilTarget);
   // Calculate the target date (next occurrence after afterDate)
   const targetDate = new Date(afterDate);
   targetDate.setDate(afterDate.getDate() + daysUntilTarget);
@@ -179,36 +181,36 @@ export function filterHoursByTimeRange(
  * @param timeRange - Optional string describing the time range
  * @returns A summary string
  */
-export function therSummgenerateWeaary(day: WeatherDay | undefined, timeRange?: string): string {
-  if (!day) {
-    return "Weather data unavailable";
-  }
+// export function therSummgenerateWeaary(day: WeatherDay | undefined, timeRange?: string): string {
+//   if (!day) {
+//     return "Weather data unavailable";
+//   }
 
-  const conditions = day.conditions.toLowerCase();
-  const temp = day.tempmax;
+//   const conditions = day.conditions.toLowerCase();
+//   const temp = day.tempmax;
   
-  const precipProb = day.precipprob;
+//   const precipProb = day.precipprob;
   
-  let summary = "";
+//   let summary = "";
   
-  if (conditions.includes("rain") || conditions.includes("shower") || precipProb > 50) {
-    summary = "Chance of Rain";
-  } else if (conditions.includes("cloud") || conditions.includes("overcast")) {
-    summary = "Cloudy";
-  } else if (temp > 85) {
-    summary = "Hot Day";
-  } else if (temp < 50) {
-    summary = "Cold Day";
-  } else {
-    summary = "Nice Day";
-  }
+//   if (conditions.includes("rain") || conditions.includes("shower") || precipProb > 50) {
+//     summary = "Chance of Rain";
+//   } else if (conditions.includes("cloud") || conditions.includes("overcast")) {
+//     summary = "Cloudy";
+//   } else if (temp > 85) {
+//     summary = "Hot Day";
+//   } else if (temp < 50) {
+//     summary = "Cold Day";
+//   } else {
+//     summary = "Nice Day";
+//   }
   
-  if (timeRange) {
-    return `${summary} (${timeRange})`;
-  }
+//   if (timeRange) {
+//     return `${summary} (${timeRange})`;
+//   }
   
-  return summary;
-}
+//   return summary;
+// }
 
 /**
  * Format date for display

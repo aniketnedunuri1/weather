@@ -184,6 +184,8 @@ export function useWeather(): UseWeatherReturn {
       selectedEndHour
     );
 
+    console.log("nextMeetupProcessed", nextMeetupProcessed)
+
     setWeatherData({
       thisMeetup: thisMeetupProcessed,
       nextMeetup: nextMeetupProcessed

@@ -19,7 +19,6 @@ import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatHourForDisplay, getTimeRangeDisplay } from "@/lib/dateUtils"
-import { useWeather } from "@/hooks/useWeather"
 
 interface WeatherChartTabsProps {
   thisMeetupDate: Date
@@ -27,6 +26,10 @@ interface WeatherChartTabsProps {
   startHour: number
   endHour: number
   dayName: string
+  weatherData: {
+    thisMeetup: any
+    nextMeetup: any
+  }
 }
 
 interface HourlyDataPoint {
@@ -42,14 +45,18 @@ export default function WeatherChartTabs({
   nextMeetupDate,
   startHour = 12,
   endHour = 17,
-  dayName = "friday"
+  dayName = "friday",
+  weatherData
 }: WeatherChartTabsProps) {
   const [activeTab, setActiveTab] = useState("temperature")
-  const { weatherData } = useWeather()
+  console.log("weatherDataInChart", weatherData)
   
   // Format the dates for display
   const thisMeetupFormatted = format(thisMeetupDate, "MMM d")
   const nextMeetupFormatted = format(nextMeetupDate, "MMM d")
+
+  console.log("thisMeetupDate", thisMeetupDate)
+  console.log("nextMeetupDate", nextMeetupFormatted)
   
   // Get day name for display
   const dayDisplayName = format(thisMeetupDate, "EEEE")
