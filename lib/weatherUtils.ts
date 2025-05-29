@@ -98,6 +98,7 @@ export function findNextOccurrenceInForecast(
   // Get the day index (0 = Sunday, 1 = Monday, etc.)
   const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   const targetDayIndex = dayNames.indexOf(targetDay.toLowerCase());
+  console.log("targetDayIndex", targetDayIndex);
   
   if (targetDayIndex === -1) {
     return undefined;
@@ -108,8 +109,9 @@ export function findNextOccurrenceInForecast(
 
   
   const afterDateDayIndex = afterDate.getDay();
+  console.log("afterDateDayIndex", afterDateDayIndex);
   let daysUntilTarget = targetDayIndex - afterDateDayIndex;
-  if (daysUntilTarget < 0) {
+  if (daysUntilTarget <= 0) {
     // If target day is earlier in the week, find next week's occurrence
     daysUntilTarget += 7;
   }
@@ -124,8 +126,10 @@ export function findNextOccurrenceInForecast(
   // Format the target date as YYYY-MM-DD for comparison
   const targetDateStr = format(targetDate, 'yyyy-MM-dd');  
 
+  console.log("targetDateStr", targetDateStr);
   
   // Find the day in the forecast that matches our target date
+  console.log("forecast.days", forecast);
   for (const day of forecast.days) {
     if (day.datetime === targetDateStr) {
 
@@ -135,13 +139,13 @@ export function findNextOccurrenceInForecast(
   
   // If we can't find the exact date, find the closest day with matching day of week that's after afterDate
 
-  for (const day of forecast.days) {
-    const dayDate = new Date(day.datetime);
-    if (dayDate.getDay() === targetDayIndex && dayDate > afterDate) {
+  // for (const day of forecast.days) {
+  //   const dayDate = new Date(day.datetime);
+  //   if (dayDate.getDay() === targetDayIndex && dayDate > afterDate) {
 
-      return day;
-    }
-  }
+  //     return day;
+  //   }
+  // }
   
 
   return undefined;

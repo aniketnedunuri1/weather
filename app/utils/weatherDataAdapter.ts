@@ -69,6 +69,7 @@ export function convertApiResponseToAppFormat(
 ): WeatherData & { tags: WeatherTagInfo[] } {
   // Important: apiResponse.days should already contain just the one day we want
   // from findDayInForecast or findNextOccurrenceInForecast
+  console.log("apiResponse", apiResponse)
   const day = apiResponse.days[0];
   
   console.log('Converting day to app format:', {
