@@ -25,7 +25,16 @@ export function getNextDayOccurrence(dayName: string): Date {
   
   // Calculate days to add
   let daysToAdd = dayNumber - currentDayNumber;
-  if (daysToAdd <= 0) daysToAdd += 7; // If it's in the past, get next week's occurrence
+  
+  // If it's the same day (today), use today's date
+  // if (daysToAdd === 0) {
+  //   return today;
+  // }
+  
+  // // If the day is in the past, get next week's occurrence
+  // if (daysToAdd < 0) daysToAdd += 7;
+
+  if (daysToAdd < 0) daysToAdd += 7;
   
   return addDays(today, daysToAdd);
 }
