@@ -22,24 +22,38 @@ function mapConditionToAppFormat(condition: string): "sunny" | "cloudy" | "rainy
 }
 
 /**
- * Extracts relevant hours for the meetup (3PM-6PM)
+ * Extracts relevant hours for the meetup based on the specified time range
  */
-function extractMeetupHours(day: WeatherDay) {
-  // Filter hours between 3PM and 6PM (15:00 - 18:00)
+function extractMeetupHours(day: WeatherDay, startHour: number = 12, endHour: number = 17) {
+  if (!day.hours || day.hours.length === 0) {
+    return [];
+  }
+  
+  // Filter hours within the specified range
   return day.hours
     .filter(hour => {
-      const hourNum = parseInt(hour.datetime.split(':')[0]);
-      return hourNum >= 13 && hourNum <= 18;
+      // Handle different datetime formats
+      const hourNum = hour.datetime.includes(':') 
+        ? parseInt(hour.datetime.split(':')[0])
+        : parseInt(hour.datetime);
+      
+      return hourNum >= startHour && hourNum <= endHour;
     })
     .map(hour => {
+      // Handle different datetime formats
+      const hourNum = hour.datetime.includes(':') 
+        ? parseInt(hour.datetime.split(':')[0])
+        : parseInt(hour.datetime);
+      
       // Convert 24-hour format to AM/PM
-      const hourNum = parseInt(hour.datetime.split(':')[0]);
-      const hourFormatted = hourNum > 12 ? `${hourNum - 12} PM` : `${hourNum} AM`;
+      const hourFormatted = hourNum === 0 ? '12 AM' : 
+                           hourNum === 12 ? '12 PM' : 
+                           hourNum > 12 ? `${hourNum - 12} PM` : `${hourNum} AM`;
       
       return {
         time: hourFormatted,
         temp: Math.round(hour.temp),
-        precipitation: hour.precipprob
+        precipitation: hour.precipprob || 0
       };
     });
 }
@@ -49,30 +63,40 @@ function extractMeetupHours(day: WeatherDay) {
  */
 export function convertApiResponseToAppFormat(
   apiResponse: WeatherApiResponse, 
-  date: Date
+  date: Date,
+  startHour: number = 12,
+  endHour: number = 17
 ): WeatherData & { tags: WeatherTagInfo[] } {
-  // Find the day that matches our target date
-  const targetDateStr = date.toISOString().split('T')[0];
-  const day = apiResponse.days.find(d => d.datetime === targetDateStr) || apiResponse.days[0];
+  // Important: apiResponse.days should already contain just the one day we want
+  // from findDayInForecast or findNextOccurrenceInForecast
+  const day = apiResponse.days[0];
+  
+  console.log('Converting day to app format:', {
+    datetime: day.datetime,
+    tempHigh: day.tempmax,
+    tempLow: day.tempmin,
+    precip: day.precipprob,
+    wind: day.windspeed
+  });
   
   // Get weather tags
   const tags = getWeatherTagInfo(day);
   
   // Create a summary based on tags and description
-  let summary = apiResponse.description;
+  let summary = apiResponse.description || '';
   if (tags.length > 0) {
     summary = tags[0].label;
   }
   
   return {
     date,
-    tempHigh: Math.round(day.tempmax),
-    tempLow: Math.round(day.tempmin),
-    precipitation: day.precipprob,
-    windSpeed: day.windspeed,
+    tempHigh: Math.round(day.tempmax || day.temp || 0),
+    tempLow: Math.round(day.tempmin || day.temp || 0),
+    precipitation: day.precipprob || 0,
+    windSpeed: day.windspeed || 0,
     summary,
-    condition: mapConditionToAppFormat(day.conditions),
-    hourlyData: extractMeetupHours(day),
+    condition: mapConditionToAppFormat(day.conditions || ''),
+    hourlyData: extractMeetupHours(day, startHour, endHour),
     tags
   };
 }

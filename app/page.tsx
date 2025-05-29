@@ -7,8 +7,6 @@ import LoadingState from "./components/LoadingState"
 import ErrorState from "./components/ErrorState"
 import WeatherForecast from "./components/WeatherForecast"
 import WeatherChartTabs from "./components/charts/WeatherChartTabs"
-import { thisFridayWeatherResponse, nextFridayWeatherResponse } from "./mock/weatherApiResponse"
-
 /**
  * Main Weather Meetup App component
  * Uses custom hooks for business logic and componentized UI elements
@@ -70,8 +68,6 @@ export default function WeatherMeetupApp() {
           {/* Weather Visualization */}
           <div className="mb-8">
             <WeatherChartTabs 
-              thisMeetupDay={thisFridayWeatherResponse.days[0]}
-              nextMeetupDay={nextFridayWeatherResponse.days[0]}
               thisMeetupDate={meetupTime}
               nextMeetupDate={addDays(meetupTime, 7)}
               startHour={selectedStartHour}
