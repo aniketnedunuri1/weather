@@ -1,15 +1,3 @@
-/**
- * Weather tag utility functions based on specified conditions
- * 
- * Tag Conditions:
- * ✅ "Nice Day" - tempmax 60–75°F, precipprob < 30%, windspeed < 10 mph
- * 🌧 "Chance of Rain" - precipprob ≥ 30% or precip ≥ 0.2 inches
- * 💨 "Too Windy" - windspeed ≥ 15 mph or windgust ≥ 20 mph
- * 🥵 "Hot Day" - tempmax ≥ 85°F
- * 🥶 "Cold Day" - tempmax < 50°F
- * 💦 "Humid" - humidity ≥ 75%
- */
-
 export interface WeatherTagInfo {
   emoji: string;
   label: string;
@@ -51,11 +39,6 @@ export const WEATHER_TAGS: Record<WeatherTagType, WeatherTagInfo> = {
   }
 };
 
-/**
- * Determines weather tags based on weather data
- * @param weatherData Weather data for a specific day
- * @returns Array of applicable weather tags
- */
 export function getWeatherTags(weatherData: {
   tempmax?: number;
   precipprob?: number;
@@ -65,9 +48,7 @@ export function getWeatherTags(weatherData: {
   humidity?: number;
 }): WeatherTagType[] {
   const tags: WeatherTagType[] = [];
-  
-  // Extract weather data with fallbacks to prevent undefined errors
-  const {
+    const {
     tempmax = 0,
     precipprob = 0,
     precip = 0,
@@ -76,35 +57,28 @@ export function getWeatherTags(weatherData: {
     humidity = 0
   } = weatherData;
   
-  // Check conditions for each tag
   console.log("weatherDataabc", weatherData);
   
-  // Nice Day: tempmax 60–75°F, precipprob < 30%, windspeed < 10 mph
   if (tempmax >= 60 && tempmax <= 75 && precipprob < 30 && windspeed < 10) {
     tags.push('niceDay');
   }
   
-  // Chance of Rain: precipprob ≥ 30% or precip ≥ 0.2 inches
   if (precipprob >= 30 || precip >= 0.2) {
     tags.push('chanceOfRain');
   }
   
-  // Too Windy: windspeed ≥ 15 mph or windgust ≥ 20 mph
   if (windspeed >= 15 || windgust >= 20) {
     tags.push('tooWindy');
   }
   
-  // Hot Day: tempmax ≥ 85°F
   if (tempmax >= 85) {
     tags.push('hotDay');
   }
   
-  // Cold Day: tempmax < 50°F
   if (tempmax < 50) {
     tags.push('coldDay');
   }
   
-  // Humid: humidity ≥ 75%
   if (humidity >= 75) {
     console.log('Humid', humidity)
     tags.push('humid');
@@ -113,11 +87,6 @@ export function getWeatherTags(weatherData: {
   return tags;
 }
 
-/**
- * Gets the weather tag info objects for the given weather data
- * @param weatherData Weather data for a specific day
- * @returns Array of weather tag info objects
- */
 export function getWeatherTagInfo(weatherData: {
   tempmax?: number;
   precipprob?: number;

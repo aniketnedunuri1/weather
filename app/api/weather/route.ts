@@ -2,20 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile } from 'fs/promises';
 import path from 'path';
 
-// Get API key from environment variables
 const API_KEY = process.env.WEATHER_API_KEY;
 
 if (!API_KEY) {
   console.error('WEATHER_API_KEY environment variable is not set');
 }
-console.log('here')
 
-/**
- * GET handler for /api/weather route
- * Proxies requests to Visual Crossing Weather API
- */
+
 export async function GET(request: NextRequest) {
-  // Get location from query params
   const searchParams = request.nextUrl.searchParams;
   const location = searchParams.get('location');
   
@@ -26,24 +20,19 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Check if API key is available
   if (!API_KEY) {
     return NextResponse.json(
       { error: 'Weather API key is not configured. Please check server configuration.' },
       { status: 500 }
     );
   }
-  console.log('here')
   try {
     const encodedLocation = encodeURIComponent(location.trim());
     const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${encodedLocation}?key=${API_KEY}&include=hours`;
     
     const response = await fetch(url);
-
-    console.log("Response: ", response);
     
     if (!response.ok) {
-      // Handle HTTP errors
       if (response.status === 400) {
         return NextResponse.json(
           { error: 'Invalid location. Please check and try again.' },
@@ -68,21 +57,14 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await response.json();
-    
-    // Log the API response for debugging
-    console.log('Visual Crossing API Response:');
-    console.log(JSON.stringify(data, null, 2));
-    
-    // Write the response to the JSON file
+
     try {
       const filePath = path.join(process.cwd(), 'weather-api-response.json');
       await writeFile(filePath, JSON.stringify(data, null, 2));
-      console.log(`Weather data for ${location} saved to weather-api-response.json`);
     } catch (writeError) {
       console.error('Error writing to weather-api-response.json:', writeError);
-      // Continue even if writing fails - don't block the API response
+      
     }
-    
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching weather data:', error);

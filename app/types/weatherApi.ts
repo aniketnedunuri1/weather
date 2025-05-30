@@ -1,8 +1,3 @@
-/**
- * Types for the Weather API response
- */
-
-// Hour of weather data
 export interface WeatherHour {
   datetime: string;
   temp: number;
@@ -13,10 +8,9 @@ export interface WeatherHour {
   windspeed: number;
   windgust: number;
   conditions: string;
-  [key: string]: any; // For any additional properties
+  [key: string]: any;
 }
 
-// Day of weather data
 export interface WeatherDay {
   datetime: string;
   datetimeEpoch: number;
@@ -32,18 +26,16 @@ export interface WeatherDay {
   conditions: string;
   source: string;
   hours: WeatherHour[];
-  [key: string]: any; // For any additional properties
+  [key: string]: any;
 }
 
-// Weather alert
 export interface WeatherAlert {
   event: string;
   description: string;
   headline?: string;
-  [key: string]: any; // For any additional properties
+  [key: string]: any; 
 }
 
-// Current conditions
 export interface CurrentConditions {
   datetime: string;
   datetimeEpoch: number;
@@ -55,10 +47,9 @@ export interface CurrentConditions {
   windspeed: number;
   windgust: number;
   conditions: string;
-  [key: string]: any; // For any additional properties
+  [key: string]: any;
 }
 
-// Complete weather API response
 export interface WeatherApiResponse {
   latitude: number;
   longitude: number;
@@ -70,5 +61,5 @@ export interface WeatherApiResponse {
   days: WeatherDay[];
   alerts: WeatherAlert[];
   currentConditions: CurrentConditions;
-  [key: string]: any; // For any additional properties
+  [key: string]: any;
 }

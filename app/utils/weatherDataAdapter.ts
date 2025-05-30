@@ -78,9 +78,7 @@ export function convertApiResponseToAppFormat(
   const tags = getWeatherTagInfo(day);
   console.log('abc',apiResponse)
   
-  let summary = apiResponse.days[0].description || '';  // if (tags.length > 0) {
-  //   summary = tags[0].label;
-  // }
+  let summary = apiResponse.days[0].description || '';
   
   return {
     date,

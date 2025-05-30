@@ -49,21 +49,15 @@ export default function WeatherChartTabs({
 }: WeatherChartTabsProps) {
   const [activeTab, setActiveTab] = useState("temperature")
   
-  // Format the dates for display
   const thisMeetupFormatted = format(thisMeetupDate, "MMM d")
   const nextMeetupFormatted = format(nextMeetupDate, "MMM d")
   
-  // Get day name for display
   const dayDisplayName = format(thisMeetupDate, "EEEE")
   
-  // Get time range display
   const timeRange = getTimeRangeDisplay(startHour, endHour)
   
-  // Convert hourly data from the weather API to chart format
   const convertHourlyDataToChartFormat = (hourlyData: any[]): HourlyDataPoint[] => {
-    console.log("hour", hourlyData)
     return hourlyData.map(hour => ({
-      
       name: hour.time,
       temp: hour.temp,
       precipprob: hour.precipitation,
@@ -74,24 +68,17 @@ export default function WeatherChartTabs({
   
   const thisMeetupHours = convertHourlyDataToChartFormat(weatherData.thisMeetup.hourlyData)
   const nextMeetupHours = convertHourlyDataToChartFormat(weatherData.nextMeetup.hourlyData)
-  console.log("thisMeetupHours", thisMeetupHours)
-  console.log("nextMeetupHours", nextMeetupHours)
-  
 
   const combinedData: any[] = thisMeetupHours.map((thisHour, index) => ({
     name: thisHour.name,
-    // Temperature data
     [thisMeetupFormatted]: thisHour.temp,
     [nextMeetupFormatted]: nextMeetupHours[index]?.temp || null,
-    // Precipitation data
     [`${thisMeetupFormatted}_precip`]: thisHour.precipprob,
     [`${nextMeetupFormatted}_precip`]: nextMeetupHours[index]?.precipprob || null,
-    // Wind speed data
     [`${thisMeetupFormatted}_wind`]: thisHour.windspeed,
     [`${nextMeetupFormatted}_wind`]: nextMeetupHours[index]?.windspeed || null
   }))
 
- console.log("combineddats", combinedData)
   return (
     <Card className="w-full">
       <CardHeader>

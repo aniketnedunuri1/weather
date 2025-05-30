@@ -31,7 +31,6 @@ const getSummaryVariant = (summary: string) => {
 }
 
 export default function WeatherCard({ title, weather }: WeatherCardProps) {
-  console.log("weather", weather)
   return (
     <Card className={`relative`}>
 

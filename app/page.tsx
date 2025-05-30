@@ -7,12 +7,9 @@ import LoadingState from "./components/LoadingState"
 import ErrorState from "./components/ErrorState"
 import WeatherForecast from "./components/WeatherForecast"
 import WeatherChartTabs from "./components/charts/WeatherChartTabs"
-/**
- * Main Weather Meetup App component
- * Uses custom hooks for business logic and componentized UI elements
- */
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
 export default function WeatherMeetupApp() {
-  // Use the custom hook for all weather-related state and logic
   const {
     location,
     setLocation,
@@ -26,16 +23,13 @@ export default function WeatherMeetupApp() {
     weatherData,
     loading,
     error,
+    submitted,
     handleLocationSubmit
   } = useWeather()
-
-  console.log("weatherDataPage", weatherData)
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <h1 className="text-4xl font-bold text-center mb-6">Park Meetup Weather</h1>
-
-      {/* Weather Search Form */}
       <WeatherSearch
         location={location}
         setLocation={setLocation}
@@ -48,17 +42,22 @@ export default function WeatherMeetupApp() {
         loading={loading}
         handleLocationSubmit={handleLocationSubmit}
       />
-
-      {/* Loading State */}
+      {!submitted && !loading && !error && (
+        <div className="my-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Please enter a location</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Enter a city or ZIP code above and click "Get Weather" to see the forecast comparison for this and next week. </p>
+          </CardContent>
+        </Card>
+      </div>
+      )}
       {loading && <LoadingState />}
-
-      {/* Error State */}
       <ErrorState error={error} />
-
-      {/* Weather Content */}
-      {!loading && (
+      {submitted && !loading && (
         <>
-          {/* Weather Cards */}
           <WeatherForecast 
             meetupTime={meetupTime} 
             weatherData={{
@@ -66,8 +65,6 @@ export default function WeatherMeetupApp() {
               nextMeetup: weatherData.nextMeetup
             }} 
           />
-
-          {/* Weather Visualization */}
           <div className="mb-8">
             <WeatherChartTabs 
               thisMeetupDate={meetupTime}

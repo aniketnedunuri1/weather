@@ -27,6 +27,7 @@ interface UseWeatherReturn {
   weatherData: WeatherState;
   loading: boolean;
   error: string;
+  submitted: string;
   handleLocationSubmit: () => Promise<void>;
 }
 
@@ -41,11 +42,7 @@ const emptyWeatherData: WeatherData = {
   hourlyData: []
 };
 
-/**
- * Custom hook for managing weather data and user interactions
- */
 export function useWeather(): UseWeatherReturn {
-  // Basic state
   const [location, setLocation] = useState("");
   const [selectedDay, setSelectedDay] = useState("friday");
   const [selectedStartHour, setSelectedStartHour] = useState(12);
@@ -54,24 +51,18 @@ export function useWeather(): UseWeatherReturn {
     adjustTimeToHour(getNextDayOccurrence("friday"), 14)
   );
   
-  // API state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState("");
   const [weatherData, setWeatherData] = useState<WeatherState>({
     thisMeetup: emptyWeatherData,
     nextMeetup: emptyWeatherData
   });
   
-  // Cache for API responses
   const weatherCache = useRef<Record<string, WeatherApiResponse>>({});
-
-  /**
-   * Fetch weather data from API with caching
-   */
   const fetchWeatherData = useCallback(async (locationQuery: string): Promise<WeatherApiResponse | null> => {
     const normalizedLocation = locationQuery.trim().toLowerCase();
     
-    // Return cached data if available
     if (weatherCache.current[normalizedLocation]) {
       return weatherCache.current[normalizedLocation];
     }
@@ -100,9 +91,6 @@ export function useWeather(): UseWeatherReturn {
     }
   }, []);
 
-  /**
-   * Create empty day data for missing forecast days
-   */
   const createEmptyDay = (data: WeatherApiResponse, targetDate: Date) => {
     const emptyDay = { ...data.days[0] };
     emptyDay.datetime = format(targetDate, 'yyyy-MM-dd');
@@ -121,19 +109,11 @@ export function useWeather(): UseWeatherReturn {
     };
   };
 
-  /**
-   * Process weather data for selected day and time range
-   */
   const processWeatherData = useCallback((data: WeatherApiResponse | null) => {
     if (!data) return;
 
-    // Calculate dates
     const selectedDate = getNextDayOccurrence(selectedDay);
-    console.log("selectedDay", selectedDay);
-    console.log("selectedDate", selectedDate);
-    const nextWeekDate = getNextOccurrence(selectedDate); // This should be 7 days later
-    console.log("selectedDate", selectedDate);
-    console.log("nextWeekDate", nextWeekDate);
+    const nextWeekDate = getNextOccurrence(selectedDate);
     const middleHour = Math.floor((selectedStartHour + selectedEndHour) / 2);
     
     const thisDate = adjustTimeToHour(selectedDate, middleHour);
@@ -141,24 +121,19 @@ export function useWeather(): UseWeatherReturn {
     
     setMeetupTime(thisDate);
 
-    // Find forecast days
     const thisMeetupDay = findDayInForecast(data, selectedDay);
     const nextMeetupDay = findNextOccurrenceInForecast(data, selectedDay, selectedDate);
-    console.log("thisMeetupDay", thisMeetupDay);
-    console.log("nextMeetupDay", nextMeetupDay);
     
     const timeRangeDisplay = `${formatHourForDisplay(selectedStartHour)} - ${formatHourForDisplay(selectedEndHour)}`;
     
     if (!thisMeetupDay) return;
 
-    // Prepare data for this week
     const thisMeetupData = {
       ...data,
       days: [thisMeetupDay],
       description: `Weather for ${format(thisDate, 'EEEE, MMMM d')} (${timeRangeDisplay})`
     };
     
-    // Prepare data for next week - FIXED: Use nextWeekDate instead of selectedDate
     const nextMeetupData = nextMeetupDay 
       ? {
           ...data,
@@ -167,8 +142,6 @@ export function useWeather(): UseWeatherReturn {
         }
       : createEmptyDay(data, nextDate);
 
-
-    // Convert to app format
     const thisMeetupProcessed = convertApiResponseToAppFormat(
       thisMeetupData, 
       thisDate, 
@@ -178,7 +151,7 @@ export function useWeather(): UseWeatherReturn {
     
     const nextMeetupProcessed = convertApiResponseToAppFormat(
       nextMeetupData, 
-      nextDate, // FIXED: Use nextDate instead of thisDate
+      nextDate,
       selectedStartHour, 
       selectedEndHour
     );
@@ -189,9 +162,6 @@ export function useWeather(): UseWeatherReturn {
     });
   }, [selectedDay, selectedStartHour, selectedEndHour]);
 
-  /**
-   * Update weather data when selections change
-   */
   const updateForCurrentSelection = useCallback(() => {
     if (!location.trim()) return;
     
@@ -203,19 +173,20 @@ export function useWeather(): UseWeatherReturn {
     }
   }, [location, processWeatherData]);
 
-  /**
-   * Handle location submission
-   */
   const handleLocationSubmit = async () => {
     if (!location.trim()) return;
     
-    const data = await fetchWeatherData(location);
-    if (data) {
-      processWeatherData(data);
+    try {
+      const data = await fetchWeatherData(location);
+      if (data) {
+        processWeatherData(data);
+        setSubmitted(location);
+      }
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
     }
   };
 
-  // Update weather data when day or time selections change
   useEffect(() => {
     updateForCurrentSelection();
   }, [selectedDay, selectedStartHour, selectedEndHour, updateForCurrentSelection]);
@@ -233,6 +204,7 @@ export function useWeather(): UseWeatherReturn {
     weatherData,
     loading,
     error,
+    submitted,
     handleLocationSubmit
   };
 }
