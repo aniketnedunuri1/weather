@@ -82,7 +82,9 @@ export default function WeatherChartTabs({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Weather Comparison for {dayDisplayName} {timeRange}</CardTitle>
+        <CardTitle className="text-lg sm:text-xl">
+          Weather Comparison for {dayDisplayName} {timeRange}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -111,7 +113,14 @@ export default function WeatherChartTabs({
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
-                      <YAxis unit="°" domain={['dataMin - 5', 'dataMax + 5']} />
+                      <YAxis 
+                        unit="°" 
+                        domain={['dataMin - 5', 'dataMax + 5']} 
+                        ticks={Array.from(
+                          { length: 10 }, 
+                          (_, i) => Math.floor(Math.min(...combinedData.map(d => Math.min(d[thisMeetupFormatted], d[nextMeetupFormatted]))) - 5) + i * Math.ceil((Math.max(...combinedData.map(d => Math.max(d[thisMeetupFormatted], d[nextMeetupFormatted]))) + 5 - (Math.min(...combinedData.map(d => Math.min(d[thisMeetupFormatted], d[nextMeetupFormatted]))) - 5)) / 9)
+                        )}
+                      />
                       <Tooltip formatter={(value) => [`${value}°`, 'Temperature']} />
                       <Legend />
                       <Line 
@@ -120,13 +129,15 @@ export default function WeatherChartTabs({
                         name={`${dayDisplayName} ${thisMeetupFormatted}`}
                         stroke="#ff7300" 
                         activeDot={{ r: 8 }} 
+                        dot={{ fill: "#ff7300", r: 4 }}
                       />
                       <Line 
                         type="monotone" 
                         dataKey={nextMeetupFormatted}
                         name={`${dayDisplayName} ${nextMeetupFormatted}`}
-                        stroke="#387908" 
+                        stroke="#3b82f6" 
                         activeDot={{ r: 8 }} 
+                        dot={{ fill: "#3b82f6", r: 4 }}
                       />
                     </LineChart>
                     
@@ -171,8 +182,8 @@ export default function WeatherChartTabs({
                         type="monotone" 
                         dataKey={`${nextMeetupFormatted}_precip`}
                         name={`${dayDisplayName} ${nextMeetupFormatted}`}
-                        stroke="#387908" 
-                        fill="#387908" 
+                        stroke="#3b82f6" 
+                        fill="#3b82f6" 
                       />
                     </BarChart>
                     
@@ -190,7 +201,7 @@ export default function WeatherChartTabs({
               <CardContent>
                 <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
+                    <LineChart
                       data={combinedData}
                       margin={{
                         top: 5,
@@ -204,21 +215,23 @@ export default function WeatherChartTabs({
                       <YAxis unit="mph" />
                       <Tooltip formatter={(value) => [`${value} mph`, 'Wind Speed']} />
                       <Legend />
-                      <Area 
+                      <Line 
                         type="monotone" 
                         dataKey={`${thisMeetupFormatted}_wind`}
                         name={`${dayDisplayName} ${thisMeetupFormatted}`}
                         stroke="#ff7300" 
-                        activeDot={{ r: 8 }} 
+                        activeDot={{ r: 8 }}
+                        dot={{ fill: "#ff7300", r: 4 }}
                       />
-                      <Area 
+                      <Line 
                         type="monotone" 
                         dataKey={`${nextMeetupFormatted}_wind`}
                         name={`${dayDisplayName} ${nextMeetupFormatted}`}
-                        stroke="#387908" 
-                        activeDot={{ r: 8 }} 
+                        stroke="#3b82f6"
+                        activeDot={{ r: 8 }}
+                        dot={{ fill: "#3b82f6", r: 4 }}
                       />
-                    </AreaChart>
+                    </LineChart>
                     
                   </ResponsiveContainer>
                 </div>

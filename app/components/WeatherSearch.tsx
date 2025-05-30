@@ -32,7 +32,7 @@ export default function WeatherSearch({
 }: WeatherSearchProps) {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6 items-end">
-      <div className="flex-1">
+      <div className="w-full md:flex-1">
         <label htmlFor="location" className="text-sm font-medium block mb-1">
           Location
         </label>
@@ -40,9 +40,8 @@ export default function WeatherSearch({
           id="location"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleLocationSubmit()}
           placeholder="City or zip code"
-          className="h-9"
+          className="h-9 w-full"
         />
       </div>
 
@@ -79,7 +78,10 @@ export default function WeatherSearch({
           </SelectTrigger>
           <SelectContent>
             {Array.from({ length: 24 }, (_, i) => i).map(hour => (
-              <SelectItem key={`start-${hour}`} value={hour.toString()}>
+              <SelectItem 
+              key={`start-${hour}`} 
+              value={hour.toString()} 
+              disabled={hour >= selectedEndHour}>
                 {formatHourForDisplay(hour)}
               </SelectItem>
             ))}
@@ -114,7 +116,7 @@ export default function WeatherSearch({
 
       <button 
         onClick={handleLocationSubmit}
-        className="h-9 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+        className="h-9 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-800 text-white rounded-md hover:opacity-90 transition-opacity whitespace-nowrap order-last md:order-none"
         disabled={loading}
       >
         {loading ? <Loader className="h-4 w-4 animate-spin" /> : "Get Weather"}

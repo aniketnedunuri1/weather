@@ -8,6 +8,7 @@ import ErrorState from "./components/ErrorState"
 import WeatherForecast from "./components/WeatherForecast"
 import WeatherChartTabs from "./components/charts/WeatherChartTabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Logo from "./components/Logo"
 
 export default function WeatherMeetupApp() {
   const {
@@ -28,8 +29,13 @@ export default function WeatherMeetupApp() {
   } = useWeather()
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <h1 className="text-4xl font-bold text-center mb-6">Park Meetup Weather</h1>
+    <>
+      <div className="fixed top-0 left-0 right-0 bg-background border-b z-10">
+        <div className="px-4 py-3">
+          <Logo />
+        </div>
+      </div>
+      <div className="container mx-auto py-24 px-4 max-w-6xl">
       <WeatherSearch
         location={location}
         setLocation={setLocation}
@@ -81,5 +87,6 @@ export default function WeatherMeetupApp() {
         </>
       )}
     </div>
+    </>
   )
 }
