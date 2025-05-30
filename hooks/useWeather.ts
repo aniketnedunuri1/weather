@@ -1,6 +1,3 @@
-/**
- * Custom hook for managing weather data and user interactions
- */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import { WeatherData } from "@/app/types/weather";
