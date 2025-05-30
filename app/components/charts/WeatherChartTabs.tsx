@@ -61,10 +61,6 @@ export default function WeatherChartTabs({
   
   // Convert hourly data from the weather API to chart format
   const convertHourlyDataToChartFormat = (hourlyData: any[]): HourlyDataPoint[] => {
-    // if (!hourlyData || hourlyData.length === 0) {
-    //   return generatePlaceholderData(startHour, endHour)
-    // }
-    
     return hourlyData.map(hour => ({
       name: hour.time,
       temp: hour.temp,
@@ -74,54 +70,9 @@ export default function WeatherChartTabs({
     }))
   }
   
-  // Generate placeholder data as fallback
-  // const generatePlaceholderData = (startHour: number, endHour: number): HourlyDataPoint[] => {
-  //   const hours: HourlyDataPoint[] = []
-  //   for (let hour = startHour; hour <= endHour; hour++) {
-  //     hours.push({
-  //       name: formatHourForDisplay(hour),
-  //       temp: Math.round(65 + Math.random() * 10),
-  //       precip: Math.round(Math.random() * 50),
-  //       wind: Math.round(5 + Math.random() * 10),
-  //       hour: hour
-  //     })
-  //   }
-  //   return hours
-  // }
-  
-  // Get hourly data from the weather data
   const thisMeetupHours = convertHourlyDataToChartFormat(weatherData.thisMeetup.hourlyData)
   const nextMeetupHours = convertHourlyDataToChartFormat(weatherData.nextMeetup.hourlyData)
   
-  // Combine data for comparison chart
-  // const combinedData: any[] = []
-
-  // console.log( "this", thisMeetupHours)
-  // console.log("next", nextMeetupHours)
-  
-  // if (thisMeetupHours && nextMeetupHours) {
-  //   // Make sure we have the same number of hours for both days
-  //   const maxLength = Math.max(thisMeetupHours.length, nextMeetupHours.length)
-    
-  //   for (let i = 0; i < maxLength; i++) {
-  //     const thisHour = thisMeetupHours[i] || {}
-  //     const nextHour = nextMeetupHours[i] || {}
-      
-  //     combinedData.push({
-  //       name: thisHour.name || nextHour.name,
-  //       [thisMeetupFormatted]: thisHour.temp,
-  //       [nextMeetupFormatted]: nextHour.temp,
-  //       hour: thisHour.hour || nextHour.hour
-  //     })
-  //   }
-  // }
-  
-  // // Sort combined data by hour
-  // combinedData.sort((a, b) => a.hour - b.hour)
-  
-  // // Sort by hour
-  // combinedData.sort((a: any, b: any) => a.hour - b.hour)
-  // console.log("combined", combinedData)
   const combinedData: any[] = thisMeetupHours.map((thisHour, index) => ({
     name: thisHour.name,
     [thisMeetupFormatted]: thisHour.temp,
