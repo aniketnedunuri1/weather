@@ -1,14 +1,7 @@
-/**
- * Utility functions to convert Weather API response to app-friendly format
- */
-
 import { WeatherData } from "../types/weather";
 import { WeatherApiResponse, WeatherDay } from "../types/weatherApi";
 import { getWeatherTagInfo, WeatherTagInfo } from "./weatherTags";
 
-/**
- * Maps API weather conditions to app condition types
- */
 function mapConditionToAppFormat(condition: string): "sunny" | "cloudy" | "rainy" {
   const lowerCondition = condition.toLowerCase();
   
@@ -21,9 +14,6 @@ function mapConditionToAppFormat(condition: string): "sunny" | "cloudy" | "rainy
   }
 }
 
-/**
- * Extracts relevant hours for the meetup based on the specified time range
- */
 function extractMeetupHours(day: WeatherDay, startHour: number = 12, endHour: number = 17) {
   if (!day.hours || day.hours.length === 0) {
     return [];
@@ -55,9 +45,6 @@ function extractMeetupHours(day: WeatherDay, startHour: number = 12, endHour: nu
     });
 }
 
-/**
- * Converts a Weather API response to the app's WeatherData format
- */
 export function convertApiResponseToAppFormat(
   apiResponse: WeatherApiResponse, 
   date: Date,
@@ -66,17 +53,7 @@ export function convertApiResponseToAppFormat(
 ): WeatherData & { tags: WeatherTagInfo[] } {
   const day = apiResponse.days[0];
   
-  console.log('Converting day to app format:', {
-    datetime: day.datetime,
-    tempHigh: day.tempmax,
-    tempLow: day.tempmin,
-    precip: day.precipprob,
-    wind: day.windspeed
-  });
-  
-
   const tags = getWeatherTagInfo(day);
-  console.log('abc',apiResponse)
   
   let summary = apiResponse.days[0].description || '';
   
