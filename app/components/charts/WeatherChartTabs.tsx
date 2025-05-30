@@ -95,7 +95,7 @@ export default function WeatherChartTabs({
           <TabsContent value="temperature" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Temperature Comparison</CardTitle>
+                <CardTitle className="text-base md:text-lg">Temperature Comparison</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
@@ -150,7 +150,7 @@ export default function WeatherChartTabs({
           <TabsContent value="precipitation" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Precipitation Chance</CardTitle>
+                <CardTitle className="text-base md:text-lg">Precipitation Chance</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
@@ -196,7 +196,7 @@ export default function WeatherChartTabs({
           <TabsContent value="wind" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Wind Speed</CardTitle>
+                <CardTitle className="text-base md:text-lg">Wind Speed</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
