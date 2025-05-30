@@ -1,8 +1,7 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Loader2, Clock } from "lucide-react"
+import { Loader } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatHourForDisplay } from "@/lib/dateUtils"
 
@@ -113,18 +112,12 @@ export default function WeatherSearch({
         </Select>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="h-9 px-3 flex items-center gap-1">
-          <Clock className="h-3 w-3" /> Repeats Weekly
-        </Badge>
-      </div>
-
       <button 
         onClick={handleLocationSubmit}
         className="h-9 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         disabled={loading}
       >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Get Weather"}
+        {loading ? <Loader className="h-4 w-4 animate-spin" /> : "Get Weather"}
       </button>
     </div>
   )

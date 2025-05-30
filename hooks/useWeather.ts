@@ -167,7 +167,6 @@ export function useWeather(): UseWeatherReturn {
         }
       : createEmptyDay(data, nextDate);
 
-      console.log("nextMeetupData", nextMeetupData)
 
     // Convert to app format
     const thisMeetupProcessed = convertApiResponseToAppFormat(
@@ -183,8 +182,6 @@ export function useWeather(): UseWeatherReturn {
       selectedStartHour, 
       selectedEndHour
     );
-
-    console.log("nextMeetupProcessed", nextMeetupProcessed)
 
     setWeatherData({
       thisMeetup: thisMeetupProcessed,

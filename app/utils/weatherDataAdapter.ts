@@ -53,7 +53,8 @@ function extractMeetupHours(day: WeatherDay, startHour: number = 12, endHour: nu
       return {
         time: hourFormatted,
         temp: Math.round(hour.temp),
-        precipitation: hour.precipprob || 0
+        precipitation: hour.precipprob || 0,
+        windSpeed: hour.windspeed || 0,
       };
     });
 }

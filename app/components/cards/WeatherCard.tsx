@@ -31,10 +31,9 @@ const getSummaryVariant = (summary: string) => {
   return "outline"
 }
 
-export default function WeatherCard({ title, weather, isPrimary }: WeatherCardProps) {
+export default function WeatherCard({ title, weather }: WeatherCardProps) {
   return (
-    <Card className={`relative ${isPrimary ? "ring-1 ring-primary" : ""}`}>
-      {isPrimary && <Badge className="absolute top-1 right-1 z-10 text-xs py-0 px-2">Recommended</Badge>}
+    <Card className={`relative`}>
 
       <CardHeader className="py-2 px-4">
         <CardTitle className="text-primary text-base">{title}</CardTitle>

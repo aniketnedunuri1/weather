@@ -18,7 +18,7 @@ import { useState } from "react"
 import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { formatHourForDisplay, getTimeRangeDisplay } from "@/lib/dateUtils"
+import { getTimeRangeDisplay } from "@/lib/dateUtils"
 
 interface WeatherChartTabsProps {
   thisMeetupDate: Date
@@ -35,8 +35,8 @@ interface WeatherChartTabsProps {
 interface HourlyDataPoint {
   name: string
   temp: number
-  precip: number
-  wind: number
+  precipprob: number
+  windspeed: number
   hour: number
 }
 
@@ -61,26 +61,37 @@ export default function WeatherChartTabs({
   
   // Convert hourly data from the weather API to chart format
   const convertHourlyDataToChartFormat = (hourlyData: any[]): HourlyDataPoint[] => {
+    console.log("hour", hourlyData)
     return hourlyData.map(hour => ({
+      
       name: hour.time,
       temp: hour.temp,
-      precip: hour.precipprob,
-      wind: hour.windspeed,
+      precipprob: hour.precipitation,
+      windspeed: hour.windSpeed,
       hour: parseInt(hour.time)
     }))
   }
   
   const thisMeetupHours = convertHourlyDataToChartFormat(weatherData.thisMeetup.hourlyData)
   const nextMeetupHours = convertHourlyDataToChartFormat(weatherData.nextMeetup.hourlyData)
+  console.log("thisMeetupHours", thisMeetupHours)
+  console.log("nextMeetupHours", nextMeetupHours)
   
+
   const combinedData: any[] = thisMeetupHours.map((thisHour, index) => ({
     name: thisHour.name,
+    // Temperature data
     [thisMeetupFormatted]: thisHour.temp,
-    [nextMeetupFormatted]: nextMeetupHours[index]?.temp || null
+    [nextMeetupFormatted]: nextMeetupHours[index]?.temp || null,
+    // Precipitation data
+    [`${thisMeetupFormatted}_precip`]: thisHour.precipprob,
+    [`${nextMeetupFormatted}_precip`]: nextMeetupHours[index]?.precipprob || null,
+    // Wind speed data
+    [`${thisMeetupFormatted}_wind`]: thisHour.windspeed,
+    [`${nextMeetupFormatted}_wind`]: nextMeetupHours[index]?.windspeed || null
   }))
-  console.log("combineddats", combinedData)
 
-
+ console.log("combineddats", combinedData)
   return (
     <Card className="w-full">
       <CardHeader>
@@ -137,62 +148,6 @@ export default function WeatherChartTabs({
                 </div>
               </CardContent>
             </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{dayDisplayName} {thisMeetupFormatted}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[200px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={thisMeetupHours}
-                        margin={{
-                          top: 10,
-                          right: 10,
-                          left: 0,
-                          bottom: 0,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis unit="°" domain={['dataMin - 5', 'dataMax + 5']} />
-                        <Tooltip formatter={(value) => [`${value}°`, 'Temperature']} />
-                        <Area type="monotone" dataKey="temp" name="Temperature" stroke="#ff7300" fill="#ff730080" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>{dayDisplayName} {nextMeetupFormatted}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[200px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={nextMeetupHours}
-                        margin={{
-                          top: 10,
-                          right: 10,
-                          left: 0,
-                          bottom: 0,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis unit="°" domain={['dataMin - 5', 'dataMax + 5']} />
-                        <Tooltip formatter={(value) => [`${value}°`, 'Temperature']} />
-                        <Area type="monotone" dataKey="temp" name="Temperature" stroke="#387908" fill="#38790880" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </TabsContent>
           
           
@@ -203,18 +158,9 @@ export default function WeatherChartTabs({
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={[
-                        {
-                          name: `${dayDisplayName} ${thisMeetupFormatted}`,
-                          value: thisMeetupHours[0]?.precip || 0
-                        },
-                        {
-                          name: `${dayDisplayName} ${nextMeetupFormatted}`,
-                          value: nextMeetupHours[0]?.precip || 0
-                        }
-                      ]}
+                      data={combinedData}
                       margin={{
                         top: 5,
                         right: 30,
@@ -225,10 +171,24 @@ export default function WeatherChartTabs({
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis unit="%" domain={[0, 100]} />
-                      <Tooltip formatter={(value) => [`${value}%`, 'Chance of Precipitation']} />
+                      <Tooltip formatter={(value) => [`${value}%`, 'Precipitation Chance']} />
                       <Legend />
-                      <Bar dataKey="value" name="Precipitation Chance" fill="#8884d8" />
+                      <Bar 
+                        type="monotone" 
+                        dataKey={`${thisMeetupFormatted}_precip`}
+                        name={`${dayDisplayName} ${thisMeetupFormatted}`}
+                        stroke="#ff7300" 
+                        fill="#ff7300" 
+                       />
+                      <Bar 
+                        type="monotone" 
+                        dataKey={`${nextMeetupFormatted}_precip`}
+                        name={`${dayDisplayName} ${nextMeetupFormatted}`}
+                        stroke="#387908" 
+                        fill="#387908" 
+                      />
                     </BarChart>
+                    
                   </ResponsiveContainer>
                 </div>
               </CardContent>
@@ -242,18 +202,9 @@ export default function WeatherChartTabs({
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        {
-                          name: `${dayDisplayName} ${thisMeetupFormatted}`,
-                          value: thisMeetupHours[0]?.wind || 0
-                        },
-                        {
-                          name: `${dayDisplayName} ${nextMeetupFormatted}`,
-                          value: nextMeetupHours[0]?.wind || 0
-                        }
-                      ]}
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={combinedData}
                       margin={{
                         top: 5,
                         right: 30,
@@ -263,11 +214,25 @@ export default function WeatherChartTabs({
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
-                      <YAxis unit=" mph" />
+                      <YAxis unit="mph" />
                       <Tooltip formatter={(value) => [`${value} mph`, 'Wind Speed']} />
                       <Legend />
-                      <Bar dataKey="value" name="Wind Speed" fill="#82ca9d" />
-                    </BarChart>
+                      <Area 
+                        type="monotone" 
+                        dataKey={`${thisMeetupFormatted}_wind`}
+                        name={`${dayDisplayName} ${thisMeetupFormatted}`}
+                        stroke="#ff7300" 
+                        activeDot={{ r: 8 }} 
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey={`${nextMeetupFormatted}_wind`}
+                        name={`${dayDisplayName} ${nextMeetupFormatted}`}
+                        stroke="#387908" 
+                        activeDot={{ r: 8 }} 
+                      />
+                    </AreaChart>
+                    
                   </ResponsiveContainer>
                 </div>
               </CardContent>
