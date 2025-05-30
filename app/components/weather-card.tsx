@@ -9,8 +9,7 @@ import WeatherTag from "./weather-tag"
 interface WeatherCardProps {
   title: string
   weather: WeatherData & { tags?: WeatherTagInfo[] }
-  isPrimary: boolean
-}
+ }
 
 const getWeatherIcon = (condition: string) => {
   switch (condition) {

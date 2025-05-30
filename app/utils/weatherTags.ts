@@ -56,9 +56,7 @@ export function getWeatherTags(weatherData: {
     windgust = 0,
     humidity = 0
   } = weatherData;
-  
-  console.log("weatherDataabc", weatherData);
-  
+    
   if (tempmax >= 60 && tempmax <= 75 && precipprob < 30 && windspeed < 10) {
     tags.push('niceDay');
   }
@@ -80,7 +78,6 @@ export function getWeatherTags(weatherData: {
   }
   
   if (humidity >= 75) {
-    console.log('Humid', humidity)
     tags.push('humid');
   }
   

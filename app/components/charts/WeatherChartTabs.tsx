@@ -11,8 +11,6 @@ import {
   Tooltip, 
   Legend, 
   ResponsiveContainer,
-  AreaChart,
-  Area
 } from "recharts"
 import { useState } from "react"
 import { format } from "date-fns"
@@ -157,7 +155,7 @@ export default function WeatherChartTabs({
               <CardContent>
                 <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
+                    <LineChart
                       data={combinedData}
                       margin={{
                         top: 5,
@@ -171,21 +169,23 @@ export default function WeatherChartTabs({
                       <YAxis unit="%" domain={[0, 100]} />
                       <Tooltip formatter={(value) => [`${value}%`, 'Precipitation Chance']} />
                       <Legend />
-                      <Bar 
+                      <Line 
                         type="monotone" 
                         dataKey={`${thisMeetupFormatted}_precip`}
                         name={`${dayDisplayName} ${thisMeetupFormatted}`}
                         stroke="#ff7300" 
-                        fill="#ff7300" 
+                        activeDot={{ r: 8 }} 
+                        dot={{ fill: "#ff7300", r: 4 }}
                        />
-                      <Bar 
+                      <Line 
                         type="monotone" 
                         dataKey={`${nextMeetupFormatted}_precip`}
                         name={`${dayDisplayName} ${nextMeetupFormatted}`}
                         stroke="#3b82f6" 
-                        fill="#3b82f6" 
+                        activeDot={{ r: 8 }} 
+                        dot={{ fill: "#3b82f6", r: 4 }}
                       />
-                    </BarChart>
+                    </LineChart>
                     
                   </ResponsiveContainer>
                 </div>
