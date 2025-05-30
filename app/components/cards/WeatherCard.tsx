@@ -9,7 +9,6 @@ import WeatherTag from "../weather-tag"
 interface WeatherCardProps {
   title: string
   weather: WeatherData & { tags?: WeatherTagInfo[] }
-  isPrimary: boolean
 }
 
 const getWeatherIcon = (condition: string) => {
@@ -32,6 +31,7 @@ const getSummaryVariant = (summary: string) => {
 }
 
 export default function WeatherCard({ title, weather }: WeatherCardProps) {
+  console.log("weather", weather)
   return (
     <Card className={`relative`}>
 

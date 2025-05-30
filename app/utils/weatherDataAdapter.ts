@@ -17,7 +17,7 @@ function mapConditionToAppFormat(condition: string): "sunny" | "cloudy" | "rainy
   } else if (lowerCondition.includes("cloud") || lowerCondition.includes("overcast")) {
     return "cloudy";
   } else {
-    return "sunny"; // Default or clear/sunny conditions
+    return "sunny";
   }
 }
 
@@ -29,10 +29,8 @@ function extractMeetupHours(day: WeatherDay, startHour: number = 12, endHour: nu
     return [];
   }
   
-  // Filter hours within the specified range
   return day.hours
     .filter(hour => {
-      // Handle different datetime formats
       const hourNum = hour.datetime.includes(':') 
         ? parseInt(hour.datetime.split(':')[0])
         : parseInt(hour.datetime);
@@ -40,12 +38,10 @@ function extractMeetupHours(day: WeatherDay, startHour: number = 12, endHour: nu
       return hourNum >= startHour && hourNum <= endHour;
     })
     .map(hour => {
-      // Handle different datetime formats
       const hourNum = hour.datetime.includes(':') 
         ? parseInt(hour.datetime.split(':')[0])
         : parseInt(hour.datetime);
       
-      // Convert 24-hour format to AM/PM
       const hourFormatted = hourNum === 0 ? '12 AM' : 
                            hourNum === 12 ? '12 PM' : 
                            hourNum > 12 ? `${hourNum - 12} PM` : `${hourNum} AM`;
@@ -68,9 +64,6 @@ export function convertApiResponseToAppFormat(
   startHour: number = 12,
   endHour: number = 17
 ): WeatherData & { tags: WeatherTagInfo[] } {
-  // Important: apiResponse.days should already contain just the one day we want
-  // from findDayInForecast or findNextOccurrenceInForecast
-  console.log("apiResponse", apiResponse)
   const day = apiResponse.days[0];
   
   console.log('Converting day to app format:', {
@@ -81,14 +74,13 @@ export function convertApiResponseToAppFormat(
     wind: day.windspeed
   });
   
-  // Get weather tags
+
   const tags = getWeatherTagInfo(day);
+  console.log('abc',apiResponse)
   
-  // Create a summary based on tags and description
-  let summary = apiResponse.description || '';
-  if (tags.length > 0) {
-    summary = tags[0].label;
-  }
+  let summary = apiResponse.days[0].description || '';  // if (tags.length > 0) {
+  //   summary = tags[0].label;
+  // }
   
   return {
     date,

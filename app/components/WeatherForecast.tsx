@@ -20,12 +20,10 @@ export default function WeatherForecast({ meetupTime, weatherData }: WeatherFore
         <WeatherCard 
           title={`This ${format(meetupTime, 'EEEE')}`} 
           weather={weatherData.thisMeetup} 
-          isPrimary={true} 
         />
         <WeatherCard 
           title={`Next ${format(meetupTime, 'EEEE')}`} 
           weather={weatherData.nextMeetup} 
-          isPrimary={false} 
         />
       </div>
     </>
