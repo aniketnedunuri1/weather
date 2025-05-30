@@ -14,7 +14,7 @@ import {
   AreaChart,
   Area
 } from "recharts"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -45,18 +45,13 @@ export default function WeatherChartTabs({
   nextMeetupDate,
   startHour = 12,
   endHour = 17,
-  dayName = "friday",
   weatherData
 }: WeatherChartTabsProps) {
   const [activeTab, setActiveTab] = useState("temperature")
-  console.log("weatherDataInChart", weatherData)
   
   // Format the dates for display
   const thisMeetupFormatted = format(thisMeetupDate, "MMM d")
   const nextMeetupFormatted = format(nextMeetupDate, "MMM d")
-
-  console.log("thisMeetupDate", thisMeetupDate)
-  console.log("nextMeetupDate", nextMeetupFormatted)
   
   // Get day name for display
   const dayDisplayName = format(thisMeetupDate, "EEEE")
@@ -66,68 +61,74 @@ export default function WeatherChartTabs({
   
   // Convert hourly data from the weather API to chart format
   const convertHourlyDataToChartFormat = (hourlyData: any[]): HourlyDataPoint[] => {
-    if (!hourlyData || hourlyData.length === 0) {
-      return generatePlaceholderData(startHour, endHour)
-    }
+    // if (!hourlyData || hourlyData.length === 0) {
+    //   return generatePlaceholderData(startHour, endHour)
+    // }
     
     return hourlyData.map(hour => ({
       name: hour.time,
       temp: hour.temp,
-      precip: hour.precipitation,
-      wind: 10, // Default wind value if not available
+      precip: hour.precipprob,
+      wind: hour.windspeed,
       hour: parseInt(hour.time)
     }))
   }
   
   // Generate placeholder data as fallback
-  const generatePlaceholderData = (startHour: number, endHour: number): HourlyDataPoint[] => {
-    const hours: HourlyDataPoint[] = []
-    for (let hour = startHour; hour <= endHour; hour++) {
-      hours.push({
-        name: formatHourForDisplay(hour),
-        temp: Math.round(65 + Math.random() * 10),
-        precip: Math.round(Math.random() * 50),
-        wind: Math.round(5 + Math.random() * 10),
-        hour: hour
-      })
-    }
-    return hours
-  }
+  // const generatePlaceholderData = (startHour: number, endHour: number): HourlyDataPoint[] => {
+  //   const hours: HourlyDataPoint[] = []
+  //   for (let hour = startHour; hour <= endHour; hour++) {
+  //     hours.push({
+  //       name: formatHourForDisplay(hour),
+  //       temp: Math.round(65 + Math.random() * 10),
+  //       precip: Math.round(Math.random() * 50),
+  //       wind: Math.round(5 + Math.random() * 10),
+  //       hour: hour
+  //     })
+  //   }
+  //   return hours
+  // }
   
   // Get hourly data from the weather data
-  const thisMeetupHours = weatherData.thisMeetup.hourlyData?.length > 0 
-    ? convertHourlyDataToChartFormat(weatherData.thisMeetup.hourlyData)
-    : generatePlaceholderData(startHour, endHour)
-    
-  const nextMeetupHours = weatherData.nextMeetup.hourlyData?.length > 0
-    ? convertHourlyDataToChartFormat(weatherData.nextMeetup.hourlyData)
-    : generatePlaceholderData(startHour, endHour)
+  const thisMeetupHours = convertHourlyDataToChartFormat(weatherData.thisMeetup.hourlyData)
+  const nextMeetupHours = convertHourlyDataToChartFormat(weatherData.nextMeetup.hourlyData)
   
   // Combine data for comparison chart
-  const combinedData: any[] = []
+  // const combinedData: any[] = []
+
+  // console.log( "this", thisMeetupHours)
+  // console.log("next", nextMeetupHours)
   
-  if (thisMeetupHours && nextMeetupHours) {
-    // Make sure we have the same number of hours for both days
-    const maxLength = Math.max(thisMeetupHours.length, nextMeetupHours.length)
+  // if (thisMeetupHours && nextMeetupHours) {
+  //   // Make sure we have the same number of hours for both days
+  //   const maxLength = Math.max(thisMeetupHours.length, nextMeetupHours.length)
     
-    for (let i = 0; i < maxLength; i++) {
-      const thisHour = thisMeetupHours[i] || {}
-      const nextHour = nextMeetupHours[i] || {}
+  //   for (let i = 0; i < maxLength; i++) {
+  //     const thisHour = thisMeetupHours[i] || {}
+  //     const nextHour = nextMeetupHours[i] || {}
       
-      combinedData.push({
-        name: thisHour.name || nextHour.name,
-        [thisMeetupFormatted]: thisHour.temp,
-        [nextMeetupFormatted]: nextHour.temp,
-        hour: thisHour.hour || nextHour.hour
-      })
-    }
-  }
+  //     combinedData.push({
+  //       name: thisHour.name || nextHour.name,
+  //       [thisMeetupFormatted]: thisHour.temp,
+  //       [nextMeetupFormatted]: nextHour.temp,
+  //       hour: thisHour.hour || nextHour.hour
+  //     })
+  //   }
+  // }
   
-  // Sort combined data by hour
-  combinedData.sort((a, b) => a.hour - b.hour)
+  // // Sort combined data by hour
+  // combinedData.sort((a, b) => a.hour - b.hour)
   
-  // Sort by hour
-  combinedData.sort((a: any, b: any) => a.hour - b.hour)
+  // // Sort by hour
+  // combinedData.sort((a: any, b: any) => a.hour - b.hour)
+  // console.log("combined", combinedData)
+  const combinedData: any[] = thisMeetupHours.map((thisHour, index) => ({
+    name: thisHour.name,
+    [thisMeetupFormatted]: thisHour.temp,
+    [nextMeetupFormatted]: nextMeetupHours[index]?.temp || null
+  }))
+  console.log("combineddats", combinedData)
+
 
   return (
     <Card className="w-full">
@@ -151,7 +152,7 @@ export default function WeatherChartTabs({
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
-                      data={thisMeetupHours}
+                      data={combinedData}
                       margin={{
                         top: 5,
                         right: 30,
@@ -166,13 +167,22 @@ export default function WeatherChartTabs({
                       <Legend />
                       <Line 
                         type="monotone" 
-                        dataKey="temp" 
+                        dataKey={thisMeetupFormatted}
                         name={`${dayDisplayName} ${thisMeetupFormatted}`}
                         stroke="#ff7300" 
                         activeDot={{ r: 8 }} 
                       />
+                      <Line 
+                        type="monotone" 
+                        dataKey={nextMeetupFormatted}
+                        name={`${dayDisplayName} ${nextMeetupFormatted}`}
+                        stroke="#387908" 
+                        activeDot={{ r: 8 }} 
+                      />
                     </LineChart>
+                    
                   </ResponsiveContainer>
+                  
                 </div>
               </CardContent>
             </Card>
@@ -233,6 +243,7 @@ export default function WeatherChartTabs({
               </Card>
             </div>
           </TabsContent>
+          
           
           <TabsContent value="precipitation" className="space-y-4">
             <Card>
